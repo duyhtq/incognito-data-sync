@@ -1,0 +1,8 @@
+
+[[override]]
+  name = "github.com/jmoiron/sqlx"
+  version = "v1.2.0"
+
+[[override]]
+  name = "github.com/lib/pq"
+  version = "v1.2.0"
