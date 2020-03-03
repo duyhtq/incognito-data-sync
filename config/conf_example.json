@@ -1,0 +1,11 @@
+{
+    "env": "localhost",
+    "port": 8887,
+    "base_url": "http://127.0.0.1",
+    "db": "postgres://db_username:db_password@host:port/db_name?sslmode=disable",
+    "incognito": {
+      "chain_endpoint": "https://test-node.incognito.org",
+      "network_endpoint": "https://test-explorer.incognito.org/"  
+    }  
+  }
+  // this is a example file config, please clone it and remove "_example" to use.

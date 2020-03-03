@@ -1,0 +1,236 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"runtime"
+	"strconv"
+	"syscall"
+	"time"
+
+	"github.com/duyhtq/incognito-data-sync/agents"
+	config "github.com/duyhtq/incognito-data-sync/config"
+	pg "github.com/duyhtq/incognito-data-sync/databases/postgresql"
+	"github.com/duyhtq/incognito-data-sync/utils"
+)
+
+// Server info struct
+type Server struct {
+	quit   chan os.Signal
+	finish chan bool
+	agents []agents.Agent
+}
+
+func registerPDEStatePuller(
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	pdeStateStore *pg.PDEStatePGStore,
+) []agents.Agent {
+	pdeStatePuller := agents.NewPDEStatePuller(
+		"PDE-State-Puller",
+		300, // in sec
+		rpcClient,
+		pdeStateStore,
+	)
+	return append(agentsList, pdeStatePuller)
+}
+
+func registerPDEInstsExtractor(
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	pdeInstructionsPGStore *pg.PDEInstructionsPGStore,
+) []agents.Agent {
+	pdeStatePuller := agents.NewPDEInstsExtractor(
+		"PDE-Instructions-Extractor",
+		300, // in sec
+		rpcClient,
+		pdeInstructionsPGStore,
+	)
+	return append(agentsList, pdeStatePuller)
+}
+
+func registerBeaconBlockPuller(
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	beaconBlockStore *pg.BeaconBlockStore,
+) []agents.Agent {
+	pdeStatePuller := agents.NewBeaconBlockPuller(
+		"Beacon-Block-Puller",
+		30, // in sec
+		rpcClient,
+		beaconBlockStore,
+	)
+	return append(agentsList, pdeStatePuller)
+}
+
+func registerShardBlockPuller(
+	shardID int,
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	shardBlockStore *pg.ShardBlockStore,
+) []agents.Agent {
+	shardBlockPuller := agents.NewShardBlockPuller(
+		"Shard-Block-Puller-Shard-"+strconv.Itoa(shardID),
+		30, // in sec
+		rpcClient,
+		shardID,
+		shardBlockStore,
+	)
+	return append(agentsList, shardBlockPuller)
+}
+
+func registerTransactionPuller(
+	shardID int,
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	transactionsStore *pg.TransactionsStore,
+) []agents.Agent {
+	txPuller := agents.NewTransactionPuller(
+		"Transaction-Puller-Shard-"+strconv.Itoa(shardID),
+		10, // in sec
+		rpcClient,
+		shardID,
+		transactionsStore,
+	)
+	return append(agentsList, txPuller)
+}
+
+func registerTokenPuller(
+	rpcClient *utils.HttpClient,
+	agentsList []agents.Agent,
+	tokenStore *pg.TokensStore,
+) []agents.Agent {
+	tokenPuller := agents.NewTokenPuller(
+		"Token-Puller",
+		300, // in sec
+		rpcClient,
+		tokenStore,
+	)
+	return append(agentsList, tokenPuller)
+}
+
+// NewServer is to new server instance
+func NewServer() (*Server, error) {
+
+	conf := config.GetConfig()
+
+	db, err := pg.Init(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	rpcClient := utils.NewHttpClient(conf)
+	agentsList := []agents.Agent{}
+
+	// ----------------------- Register agent -----------------------
+	// pde instruction
+	pdeStateStore, err := pg.NewPDEStatePGStore(db)
+	if err != nil {
+		return nil, err
+	}
+	agentsList = registerPDEStatePuller(rpcClient, agentsList, pdeStateStore)
+
+	// pde instruction
+	pdeInstructionsPGStore, err := pg.NewPDEInstructionsPGStore(db)
+	if err != nil {
+		return nil, err
+	}
+	agentsList = registerPDEInstsExtractor(rpcClient, agentsList, pdeInstructionsPGStore)
+
+	// beacon block
+	beaconBlockStore, err := pg.NewBeaconBlockStore(db)
+	if err != nil {
+		return nil, err
+	}
+	agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
+
+	// shard block: 8 shard
+	shardBlockStore, err := pg.NewShardBlockStore(db)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i <= 7; i++ {
+		agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
+	}
+
+	// tx: 8 shard
+	txStore, err := pg.NewTransactionsStore(db)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i <= 7; i++ {
+		agentsList = registerTransactionPuller(i, rpcClient, agentsList, txStore)
+	}
+
+	// Token
+	tokenStore, err := pg.NewTokensStore(db)
+	if err != nil {
+		return nil, err
+	}
+	agentsList = registerTokenPuller(rpcClient, agentsList, tokenStore)
+
+	//
+	// ----------------------- End -----------------------
+
+	quitChan := make(chan os.Signal)
+	signal.Notify(quitChan, syscall.SIGTERM)
+	signal.Notify(quitChan, syscall.SIGINT)
+	return &Server{
+		quit:   quitChan,
+		finish: make(chan bool, len(agentsList)),
+		agents: agentsList,
+	}, nil
+}
+
+// NotifyQuitSignal is to listen quit signals on quit channel
+// and notify the signal to every registered agennt
+func (s *Server) NotifyQuitSignal(agents []agents.Agent) {
+	sig := <-s.quit
+	fmt.Printf("Caught sig: %+v \n", sig)
+	// notify all agents about quit signal
+	for _, a := range agents {
+		a.GetQuitChan() <- true
+	}
+}
+
+// Run is to start executing registered agents
+func (s *Server) Run() {
+	agents := s.agents
+	go s.NotifyQuitSignal(agents)
+	for _, a := range agents {
+		go executeAgent(s.finish, a)
+	}
+}
+
+func executeAgent(
+	finish chan bool,
+	agent agents.Agent,
+) {
+	agent.Execute() // execute as soon as starting up
+	for {
+		select {
+		case <-agent.GetQuitChan():
+			fmt.Printf("Finishing task for %s ...\n", agent.GetName())
+			time.Sleep(time.Second * 1)
+			fmt.Printf("Task for %s done! \n", agent.GetName())
+			finish <- true
+			break
+		case <-time.After(time.Duration(agent.GetFrequency()) * time.Second):
+			agent.Execute()
+		}
+	}
+}
+
+func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	s, err := NewServer()
+	if err != nil {
+		return
+	}
+	s.Run()
+	for range s.agents {
+		<-s.finish
+	}
+	fmt.Println("Server stopped gracefully!")
+}
