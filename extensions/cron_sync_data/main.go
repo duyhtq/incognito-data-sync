@@ -29,7 +29,7 @@ func registerPDEStatePuller(
 ) []agents.Agent {
 	pdeStatePuller := agents.NewPDEStatePuller(
 		"PDE-State-Puller",
-		300, // in sec
+		3, // in sec
 		rpcClient,
 		pdeStateStore,
 	)
@@ -43,7 +43,7 @@ func registerPDEInstsExtractor(
 ) []agents.Agent {
 	pdeStatePuller := agents.NewPDEInstsExtractor(
 		"PDE-Instructions-Extractor",
-		300, // in sec
+		3, // in sec
 		rpcClient,
 		pdeInstructionsPGStore,
 	)
@@ -57,7 +57,7 @@ func registerBeaconBlockPuller(
 ) []agents.Agent {
 	pdeStatePuller := agents.NewBeaconBlockPuller(
 		"Beacon-Block-Puller",
-		30, // in sec
+		3, // in sec
 		rpcClient,
 		beaconBlockStore,
 	)
@@ -72,7 +72,7 @@ func registerShardBlockPuller(
 ) []agents.Agent {
 	shardBlockPuller := agents.NewShardBlockPuller(
 		"Shard-Block-Puller-Shard-"+strconv.Itoa(shardID),
-		30, // in sec
+		3, // in sec
 		rpcClient,
 		shardID,
 		shardBlockStore,
@@ -88,7 +88,7 @@ func registerTransactionPuller(
 ) []agents.Agent {
 	txPuller := agents.NewTransactionPuller(
 		"Transaction-Puller-Shard-"+strconv.Itoa(shardID),
-		10, // in sec
+		3, // in sec
 		rpcClient,
 		shardID,
 		transactionsStore,
@@ -103,7 +103,7 @@ func registerTokenPuller(
 ) []agents.Agent {
 	tokenPuller := agents.NewTokenPuller(
 		"Token-Puller",
-		300, // in sec
+		3, // in sec
 		rpcClient,
 		tokenStore,
 	)

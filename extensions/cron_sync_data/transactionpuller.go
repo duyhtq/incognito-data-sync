@@ -138,10 +138,18 @@ func (puller *TransactionPuller) Execute() {
 					txModel.Data = string(dataJson)
 				}
 
-				metaDataType := 0
-
 				if len(tx.Metadata) > 0 {
 					txModel.Metadata = &tx.Metadata
+
+					// get meta data type:
+					type MetaData struct {
+						Type int `json:"type"`
+					}
+					data := &MetaData{Type: 0}
+					err := json.Unmarshal([]byte(tx.Metadata), data)
+					if err != nil {
+						txModel.MetaDataType = data.Type
+					}
 				}
 
 				// Begin custom data =========================================
