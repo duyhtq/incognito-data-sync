@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/duyhtq/incognito-data-sync/entities"
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/duyhtq/incognito-data-sync/utils"
-	"log"
-	"time"
 )
 
 type BeaconBlockStore interface {
@@ -74,15 +75,18 @@ func (puller *BeaconBlockPuller) Execute() {
 		}
 
 		if beaconBlockRes == nil {
+			fmt.Println("beaconBlockRes == nil")
 			continue
 		}
 
 		if beaconBlockRes.NextBlockHash == "" {
+			fmt.Println("beaconBlockRes.NextBlockHash == nil")
 			continue
 		}
 
 		bcHeightTemp, _ := puller.BeaconBlockStore.GetLatestProcessedBCHeight()
 		if bcHeightTemp == beaconBlockRes.Height {
+			fmt.Println("bcHeightTemp == beaconBlockRes.Height")
 			continue
 		}
 
@@ -114,5 +118,5 @@ func (puller *BeaconBlockPuller) Execute() {
 		bcHeight++
 	}
 
-	log.Println("[Beacon block puller] Agent is finished...")
+	fmt.Println("[Beacon block puller] Agent is finished...")
 }
