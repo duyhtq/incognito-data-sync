@@ -60,6 +60,7 @@ func (puller *TransactionPuller) getTransaction(txHash string) (*entities.Transa
 }
 
 func (puller *TransactionPuller) Execute() {
+	fmt.Println("time1: ", time.Now())
 	fmt.Println("[Transaction puller] Agent is executing...")
 
 	processingTxs := []string{}
@@ -82,11 +83,13 @@ func (puller *TransactionPuller) Execute() {
 		}
 
 		if len(temp.TxsHash) > len(latestTxs) {
+			fmt.Println("time2: ", time.Now())
 			for _, a := range temp.TxsHash {
 				if !utils.StringInSlice(a, latestTxs) {
 					processingTxs = append(processingTxs, a)
 				}
 			}
+			fmt.Println("time3", time.Now())
 		}
 	} else {
 		latestBlockHeight = 0
@@ -94,6 +97,8 @@ func (puller *TransactionPuller) Execute() {
 
 	latestBlockHeight += 1
 	for {
+		fmt.Println("for.....")
+		fmt.Println("time for ", time.Now())
 		temp, err := puller.TransactionsStore.ListNeedProcessingTxByHeight(puller.ShardID, latestBlockHeight)
 		if len(temp) > 0 && err == nil {
 			for _, t := range temp {
@@ -101,14 +106,16 @@ func (puller *TransactionPuller) Execute() {
 			}
 			latestBlockHeight = temp[len(temp)-1].BlockHeight
 		} else {
-			// log.Printf("[Transaction puller] No more tx to process\n")
+			log.Printf("[Transaction puller] No more tx to process\n")
 			continue
 		}
 
 		if len(processingTxs) > 0 {
 			for _, t := range processingTxs {
+				fmt.Println("time for for ", time.Now())
 				txByID, err := puller.TransactionsStore.GetTransactionById(t)
 				if err != nil || txByID != nil {
+					fmt.Println("err get tx id: ", err)
 					continue
 				}
 				time.Sleep(5 * time.Millisecond)
@@ -118,6 +125,7 @@ func (puller *TransactionPuller) Execute() {
 					continue
 				}
 
+				fmt.Println("execute tx to db begin: ", time.Now())
 				txModel := models.Transaction{
 					ShardID:     puller.ShardID,
 					BlockHeight: tx.BlockHeight,
@@ -218,6 +226,9 @@ func (puller *TransactionPuller) Execute() {
 				}
 				txModel.CreatedTime, _ = time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
 				err = puller.TransactionsStore.StoreTransaction(&txModel)
+
+				fmt.Println("execute tx to db end: ", time.Now())
+
 				if err != nil {
 					log.Printf("[Transaction puller err] An error occured while storing tx %s, shard %d err: %+v\n", t, puller.ShardID, err)
 					continue
