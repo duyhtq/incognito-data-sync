@@ -125,34 +125,34 @@ func NewServer() (*Server, error) {
 
 	// ----------------------- Register agent -----------------------
 	// pde instruction
-	pdeStateStore, err := pg.NewPDEStatePGStore(db)
-	if err != nil {
-		return nil, err
-	}
-	agentsList = registerPDEStatePuller(rpcClient, agentsList, pdeStateStore)
+	// pdeStateStore, err := pg.NewPDEStatePGStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// agentsList = registerPDEStatePuller(rpcClient, agentsList, pdeStateStore)
 
-	// pde instruction
-	pdeInstructionsPGStore, err := pg.NewPDEInstructionsPGStore(db)
-	if err != nil {
-		return nil, err
-	}
-	agentsList = registerPDEInstsExtractor(rpcClient, agentsList, pdeInstructionsPGStore)
+	// // pde instruction
+	// pdeInstructionsPGStore, err := pg.NewPDEInstructionsPGStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// agentsList = registerPDEInstsExtractor(rpcClient, agentsList, pdeInstructionsPGStore)
 
-	// beacon block
-	beaconBlockStore, err := pg.NewBeaconBlockStore(db)
-	if err != nil {
-		return nil, err
-	}
-	agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
+	// // beacon block
+	// beaconBlockStore, err := pg.NewBeaconBlockStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
 
-	// shard block: 8 shard
-	shardBlockStore, err := pg.NewShardBlockStore(db)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i <= 7; i++ {
-		agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
-	}
+	// // shard block: 8 shard
+	// shardBlockStore, err := pg.NewShardBlockStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for i := 0; i <= 7; i++ {
+	// 	agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
+	// }
 
 	// tx: 8 shard
 	txStore, err := pg.NewTransactionsStore(db)
@@ -164,11 +164,11 @@ func NewServer() (*Server, error) {
 	}
 
 	// Token
-	tokenStore, err := pg.NewTokensStore(db)
-	if err != nil {
-		return nil, err
-	}
-	agentsList = registerTokenPuller(rpcClient, agentsList, tokenStore)
+	// tokenStore, err := pg.NewTokensStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// agentsList = registerTokenPuller(rpcClient, agentsList, tokenStore)
 
 	//
 	// ----------------------- End -----------------------
