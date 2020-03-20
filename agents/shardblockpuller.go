@@ -3,6 +3,8 @@ package agents
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/duyhtq/incognito-data-sync/entities"
@@ -53,11 +55,11 @@ func (puller *ShardBlockPuller) getShardBlock(shardBlockHeight uint64, shardID i
 }
 
 func (puller *ShardBlockPuller) Execute() {
-	// fmt.Println("[Shard block puller] Agent is executing...")
+	fmt.Println("[Shard block puller] Agent is executing...")
 
 	blockHeight, err := puller.ShardBlockStore.GetLatestProcessedShardHeight(puller.ShardID)
 	if err != nil {
-		// log.Printf("[Shard block puller] An error occured while getting the latest processed shard block height: %+v \n", err)
+		log.Printf("[Shard block puller] An error occured while getting the latest processed shard block height: %+v \n", err)
 		return
 	}
 	if blockHeight == 0 {
@@ -67,11 +69,11 @@ func (puller *ShardBlockPuller) Execute() {
 	}
 
 	for {
-		// log.Printf("[Shard block puller] Proccessing for shard %d block height: %d\n", puller.ShardID, blockHeight)
-		time.Sleep(500 * time.Millisecond)
+		log.Printf("[Shard block puller] Proccessing for shard %d block height: %d\n", puller.ShardID, blockHeight)
+		time.Sleep(5 * time.Millisecond)
 		shardBlockRes, err := puller.getShardBlock(blockHeight, puller.ShardID)
 		if err != nil {
-			// log.Printf("[Shard block puller] An error occured while getting shard %d block height %d from chain: %+v \n", puller.ShardID, blockHeight, err)
+			log.Printf("[Shard block puller] An error occured while getting shard %d block height %d from chain: %+v \n", puller.ShardID, blockHeight, err)
 			continue
 		}
 
@@ -122,11 +124,11 @@ func (puller *ShardBlockPuller) Execute() {
 
 		err = puller.ShardBlockStore.StoreShardBlock(&shardBlockModel)
 		if err != nil {
-			// log.Printf("[Shard block puller] An error occured while storing shard block %d, shard %d err: %+v\n", blockHeight, puller.ShardID, err)
+			log.Printf("[Shard block puller] An error occured while storing shard block %d, shard %d err: %+v\n", blockHeight, puller.ShardID, err)
 			continue
 		}
 		blockHeight++
 	}
 
-	// log.Println("[Shard block puller] Agent is finished...")
+	log.Println("[Shard block puller] Agent is finished...")
 }

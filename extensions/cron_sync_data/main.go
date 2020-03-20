@@ -145,14 +145,14 @@ func NewServer() (*Server, error) {
 	// }
 	// agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
 
-	// // shard block: 8 shard
-	// shardBlockStore, err := pg.NewShardBlockStore(db)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// for i := 0; i <= 7; i++ {
-	// 	agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
-	// }
+	// shard block: 8 shard
+	shardBlockStore, err := pg.NewShardBlockStore(db)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i <= 7; i++ {
+		agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
+	}
 
 	// tx: 8 shard
 	txStore, err := pg.NewTransactionsStore(db)
