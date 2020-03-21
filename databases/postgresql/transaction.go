@@ -134,10 +134,14 @@ func (st *TransactionsStore) ListNeedProcessingTxByHeight(shardID int, blockHeig
 	}
 }
 
-func (st *TransactionsStore) GetTransactionById(txID string) (*models.Transaction, error) {
+func (st *TransactionsStore) GetTransactionById(txID string) (*models.ShortTransaction, error) {
 	sql := `SELECT * FROM transactions WHERE tx_id=$1`
-	result := []*models.Transaction{}
+	fmt.Println("sql", sql)
+	result := []*models.ShortTransaction{}
 	err := st.DB.Select(&result, sql, txID)
+
+	fmt.Println("result", result)
+
 	if err != nil {
 		return nil, err
 	} else {
@@ -146,6 +150,46 @@ func (st *TransactionsStore) GetTransactionById(txID string) (*models.Transactio
 		}
 		return result[0], nil
 	}
+}
+
+func (st *TransactionsStore) GetTransactions() ([]*models.ShortTransaction, error) {
+	sql := "SELECT id, tx_id, data, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions where id > 153418"
+	// fmt.Println("sql", sql)
+	result := []*models.ShortTransaction{}
+
+	// result1 := models.Transaction2{}
+
+	// rows, err := st.DB.Query(sql)
+
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// for rows.Next() {
+	// 	err = rows.Scan(&result1)
+	// 	fmt.Println("result1-->", result1)
+	// 	result = append(result, result1)
+	// }
+
+	err := st.DB.Select(&result, sql)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	// fmt.Println("results", result)
+
+	return result, nil
+
+	// if err != nil {
+	// 	return nil, err
+	// } else {
+	// 	if len(result) == 0 {
+	// 		return nil, nil
+	// 	}
+	// 	return result, nil
+	// }
 }
 
 func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
@@ -174,6 +218,18 @@ func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
 		txs.Data, txs.TxID, txs.TxVersion, txs.ShardID, txs.TxType, txs.PRVFee, txs.Info, txs.Proof, txs.ProofDetail, txs.Metadata, txs.TransactedPrivacyCoin, txs.TransactedPrivacyCoinProofDetail, txs.TransactedPrivacyCoinFee, txs.CreatedTime, txs.BlockHeight, txs.BlockHash, pq.Array(txs.SerialNumberList), pq.Array(txs.PublickeyList), pq.Array(txs.CoinCommitmentList), txs.MetaDataType)
 
 	// _, err := tx.NamedQuery(sqlStr, txs)
+
+	err := tx.Commit()
+
+	return err
+}
+
+func (st *TransactionsStore) UpdateCustomFiledTransaction(ID string, serialNumberList, publickeyList, coinCommitmentList []string, metaDataType int) error {
+
+	tx := st.DB.MustBegin()
+
+	tx.MustExec("Update transactions set serial_number_list= $1, public_key_list = $2, coin_commitment_list=$3, meta_data_type=$4 WHERE id = $5",
+		pq.Array(serialNumberList), pq.Array(publickeyList), pq.Array(coinCommitmentList), metaDataType, ID)
 
 	err := tx.Commit()
 

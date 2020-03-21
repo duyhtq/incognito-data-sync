@@ -19,7 +19,7 @@ type TransactionsStore interface {
 	LatestProcessedTxByHeight(shardID int, blockHeight uint64) ([]string, error)
 	ListProcessingTxByHeight(shardID int, blockHeight uint64) (*postgresql.ListProcessingTx, error)
 	ListNeedProcessingTxByHeight(shardID int, blockHeight uint64) ([]*postgresql.ListProcessingTx, error)
-	GetTransactionById(txID string) (*models.Transaction, error)
+	GetTransactionById(txID string) (*models.ShortTransaction, error)
 }
 
 type TransactionPuller struct {
