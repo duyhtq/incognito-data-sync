@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -222,14 +223,14 @@ func executeAgent(
 }
 
 func main() {
-	// runtime.GOMAXPROCS(runtime.NumCPU())
-	// s, err := NewServer()
-	// if err != nil {
-	// 	return
-	// }
-	// s.Run()
-	// for range s.agents {
-	// 	<-s.finish
-	// }
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	s, err := NewServer()
+	if err != nil {
+		return
+	}
+	s.Run()
+	for range s.agents {
+		<-s.finish
+	}
 	fmt.Println("Server stopped gracefully!")
 }
