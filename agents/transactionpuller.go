@@ -82,12 +82,12 @@ func (puller *TransactionPuller) Execute() {
 		elapsed := time.Since(start)
 		log.Printf("ListProcessingTxByHeight took %s", elapsed)
 
-		if err != nil {
+		if err != nil || temp == nil {
 			log.Printf("[Transaction puller] An error occured while ListProcessingTxByHeight shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
 		}
 
-		if temp != nil && len(temp.TxsHash) > len(latestTxs) {
+		if len(temp.TxsHash) > len(latestTxs) {
 			fmt.Println("time2: ", time.Now())
 			for _, a := range temp.TxsHash {
 				if !utils.StringInSlice(a, latestTxs) {

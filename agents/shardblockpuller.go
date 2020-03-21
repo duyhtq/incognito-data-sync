@@ -127,6 +127,7 @@ func (puller *ShardBlockPuller) Execute() {
 			log.Printf("[Shard block puller] An error occured while storing shard block %d, shard %d err: %+v\n", blockHeight, puller.ShardID, err)
 			continue
 		}
+		log.Printf("[Shard block puller] Store shard block %d, shard %d ", blockHeight, puller.ShardID)
 		blockHeight++
 	}
 
