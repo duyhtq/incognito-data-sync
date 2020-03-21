@@ -77,7 +77,11 @@ func (puller *TransactionPuller) Execute() {
 		}
 
 		// long time:
+		start := time.Now()
 		temp, err := puller.TransactionsStore.ListProcessingTxByHeight(puller.ShardID, latestBlockHeight)
+		elapsed := time.Since(start)
+		log.Printf("ListProcessingTxByHeight took %s", elapsed)
+
 		if err != nil || temp == nil {
 			log.Printf("[Transaction puller] An error occured while ListProcessingTxByHeight shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
@@ -100,7 +104,11 @@ func (puller *TransactionPuller) Execute() {
 	for {
 		fmt.Println("for.....")
 		fmt.Println("time for ", time.Now())
+		start := time.Now()
 		temp, err := puller.TransactionsStore.ListNeedProcessingTxByHeight(puller.ShardID, latestBlockHeight)
+		elapsed := time.Since(start)
+		log.Printf("ListNeedProcessingTxByHeight took %s", elapsed)
+
 		if len(temp) > 0 && err == nil {
 			for _, t := range temp {
 				processingTxs = append(processingTxs, t.TxsHash...)
