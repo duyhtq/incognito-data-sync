@@ -71,13 +71,14 @@ func (puller *TransactionPuller) Execute() {
 	}
 	if latestBlockHeight > 0 {
 		latestTxs, err := puller.TransactionsStore.LatestProcessedTxByHeight(puller.ShardID, latestBlockHeight)
-		if err != nil {
+		if err != nil || latestTxs == nil {
 			log.Printf("[Transaction puller] An error occured while LatestProcessedTxByHeight the latest processed shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
 		}
 
+		// long time:
 		temp, err := puller.TransactionsStore.ListProcessingTxByHeight(puller.ShardID, latestBlockHeight)
-		if err != nil {
+		if err != nil || temp == nil {
 			log.Printf("[Transaction puller] An error occured while ListProcessingTxByHeight shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
 		}
