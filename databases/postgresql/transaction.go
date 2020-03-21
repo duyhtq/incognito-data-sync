@@ -135,7 +135,7 @@ func (st *TransactionsStore) ListNeedProcessingTxByHeight(shardID int, blockHeig
 }
 
 func (st *TransactionsStore) GetTransactionById(txID string) (*models.ShortTransaction, error) {
-	sql := `SELECT * FROM transactions WHERE tx_id=$1`
+	sql := `SELECT id, tx_id, data, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions WHERE tx_id=$1`
 	fmt.Println("sql", sql)
 	result := []*models.ShortTransaction{}
 	err := st.DB.Select(&result, sql, txID)
