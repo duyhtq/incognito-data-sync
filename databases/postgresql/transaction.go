@@ -3,6 +3,8 @@ package postgresql
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/jmoiron/sqlx"
@@ -176,4 +178,49 @@ func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
 	err := tx.Commit()
 
 	return err
+}
+
+type TransactionDb struct {
+	ID        string `db:"id"`
+	TxID      string `db:"tx_id"`
+	TxVersion int8   `db:"tx_version"`
+	TxType    string `db:"tx_type"`
+
+	Data                             string    `db:"data"`
+	ShardID                          int       `db:"shard_id"`
+	PRVFee                           uint64    `db:"prv_fee"`
+	Info                             string    `db:"info"`
+	Proof                            *string   `db:"proof"`
+	ProofDetail                      *string   `db:"proof_detail"`
+	Metadata                         *string   `db:"metadata"`
+	TransactedPrivacyCoin            *string   `db:"transacted_privacy_coin"`
+	TransactedPrivacyCoinProofDetail *string   `db:"transacted_privacy_coin_proof_detail"`
+	TransactedPrivacyCoinFee         uint64    `db:"transacted_privacy_coin_fee"`
+	CreatedTime                      time.Time `db:"created_time"`
+	BlockHeight                      uint64    `db:"block_height"`
+	BlockHash                        string    `db:"block_hash"`
+	MetaDataType                     int       `db:"meta_data_type"`
+	SerialNumberList                 string    `db:"serial_number_list"`
+	PublickeyList                    string    `db:"public_key_list"`
+	CoinCommitmentList               string    `db:"coin_commitment_list"`
+}
+
+func (st *TransactionsStore) GetTransactionByPublicKey(publicKeys string, id int) ([]*TransactionDb, error) {
+	var sql string
+	var err error
+	result := []*TransactionDb{}
+
+	PublicKeys := strings.Split(publicKeys, ",")
+
+	sql = `SELECT * FROM transactions WHERE public_key_list && $1 AND id > $2`
+	err = st.DB.Select(&result, sql, pq.Array(PublicKeys), id)
+
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
 }

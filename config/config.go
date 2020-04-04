@@ -39,6 +39,8 @@ type Config struct {
 	BaseURL string `json:"base_url"`
 	Db      string `json:"db"`
 
+	SentryDSN string `json:"sentry_dsn"`
+
 	// 0. Incognito chain config:
 	Incognito IncognitoConfig `json:"incognito"`
 }
