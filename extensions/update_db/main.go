@@ -11,6 +11,11 @@ import (
 )
 
 func main() {
+
+	if true {
+		return
+	}
+
 	conf := config.GetConfig()
 
 	db, err := pg.Init(conf)

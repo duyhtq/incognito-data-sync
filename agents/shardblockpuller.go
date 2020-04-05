@@ -129,6 +129,7 @@ func (puller *ShardBlockPuller) Execute() {
 		err = puller.ShardBlockStore.StoreShardBlock(&shardBlockModel)
 		if err != nil {
 			log.Printf("[Shard block puller] An error occured while storing shard block %d, shard %d err: %+v\n", blockHeight, puller.ShardID, err)
+			log.Println("shardBlockModel.ID", shardBlockModel.ID)
 			continue
 		}
 		log.Printf("[Shard block puller] Store shard block %d, shard %d ", blockHeight, puller.ShardID)
