@@ -36,5 +36,6 @@ type ShardBlockTxResult struct {
 
 type ShardBlockRes struct {
 	RPCBaseRes
-	Result []*ShardBlock
+	Result *ShardBlock
+	// Result []*ShardBlock
 }
