@@ -51,11 +51,11 @@ func (puller *ShardBlockPuller) getShardBlock(shardBlockHeight uint64, shardID i
 	if shardBlockRes.RPCError != nil {
 		return nil, errors.New(shardBlockRes.RPCError.Message)
 	}
-	return shardBlockRes.Result, nil
-	// if len(shardBlockRes.Result) > 0 {
-	// 	return shardBlockRes.Result[0], nil
-	// }
-
+	// return shardBlockRes.Result, nil
+	if len(shardBlockRes.Result) > 0 {
+		return shardBlockRes.Result[0], nil
+	}
+	return nil, nil
 }
 
 func (puller *ShardBlockPuller) Execute() {
