@@ -20,6 +20,6 @@ func NewTransactionService(conf *config.Config, transaction *postgresql.Transact
 	}
 }
 
-func (t *Transaction) ListTransaction(publicKeys string, id int) ([]*postgresql.TransactionDb, error) {
-	return t.transaction.GetTransactionByPublicKey(publicKeys, id)
+func (t *Transaction) ReportPdexTrading() ([]*postgresql.ReportData, error) {
+	return t.transaction.ReportPdexTrading()
 }
