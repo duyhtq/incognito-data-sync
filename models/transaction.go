@@ -22,7 +22,19 @@ type Transaction struct {
 	BlockHeight                      uint64    `db:"block_height"`
 	BlockHash                        string    `db:"block_hash"`
 	MetaDataType                     int       `db:"meta_data_type"`
-	SerialNumberList                 []string  `db:"serial_number_list"`
 	PublickeyList                    []string  `db:"public_key_list"`
+	SerialNumberList                 []string  `db:"serial_number_list"`
 	CoinCommitmentList               []string  `db:"coin_commitment_list"`
+}
+
+type ShortTransaction struct {
+	ID   string `db:"id"`
+	TxID string `db:"tx_id"`
+
+	Data                             string  `db:"data"`
+	Proof                            *string `db:"proof"`
+	ProofDetail                      *string `db:"proof_detail"`
+	Metadata                         *string `db:"metadata"`
+	TransactedPrivacyCoin            *string `db:"transacted_privacy_coin"`
+	TransactedPrivacyCoinProofDetail *string `db:"transacted_privacy_coin_proof_detail"`
 }

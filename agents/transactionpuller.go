@@ -19,7 +19,7 @@ type TransactionsStore interface {
 	LatestProcessedTxByHeight(shardID int, blockHeight uint64) ([]string, error)
 	ListProcessingTxByHeight(shardID int, blockHeight uint64) (*postgresql.ListProcessingTx, error)
 	ListNeedProcessingTxByHeight(shardID int, blockHeight uint64) ([]*postgresql.ListProcessingTx, error)
-	GetTransactionById(txID string) (*models.Transaction, error)
+	GetTransactionById(txID string) (*models.ShortTransaction, error)
 }
 
 type TransactionPuller struct {
@@ -60,6 +60,7 @@ func (puller *TransactionPuller) getTransaction(txHash string) (*entities.Transa
 }
 
 func (puller *TransactionPuller) Execute() {
+	fmt.Println("time1: ", time.Now())
 	fmt.Println("[Transaction puller] Agent is executing...")
 
 	processingTxs := []string{}
@@ -70,23 +71,30 @@ func (puller *TransactionPuller) Execute() {
 	}
 	if latestBlockHeight > 0 {
 		latestTxs, err := puller.TransactionsStore.LatestProcessedTxByHeight(puller.ShardID, latestBlockHeight)
-		if err != nil {
+		if err != nil || latestTxs == nil {
 			log.Printf("[Transaction puller] An error occured while LatestProcessedTxByHeight the latest processed shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
 		}
 
+		// long time:
+		start := time.Now()
 		temp, err := puller.TransactionsStore.ListProcessingTxByHeight(puller.ShardID, latestBlockHeight)
-		if err != nil {
+		elapsed := time.Since(start)
+		log.Printf("ListProcessingTxByHeight took %s", elapsed)
+
+		if err != nil || temp == nil {
 			log.Printf("[Transaction puller] An error occured while ListProcessingTxByHeight shard %d block height %d: %+v \n", puller.ShardID, latestBlockHeight, err)
 			return
 		}
 
 		if len(temp.TxsHash) > len(latestTxs) {
+			fmt.Println("time2: ", time.Now())
 			for _, a := range temp.TxsHash {
 				if !utils.StringInSlice(a, latestTxs) {
 					processingTxs = append(processingTxs, a)
 				}
 			}
+			fmt.Println("time3", time.Now())
 		}
 	} else {
 		latestBlockHeight = 0
@@ -94,21 +102,29 @@ func (puller *TransactionPuller) Execute() {
 
 	latestBlockHeight += 1
 	for {
+		fmt.Println("for.....")
+		fmt.Println("time for ", time.Now())
+		start := time.Now()
 		temp, err := puller.TransactionsStore.ListNeedProcessingTxByHeight(puller.ShardID, latestBlockHeight)
+		elapsed := time.Since(start)
+		log.Printf("ListNeedProcessingTxByHeight took %s", elapsed)
+
 		if len(temp) > 0 && err == nil {
 			for _, t := range temp {
 				processingTxs = append(processingTxs, t.TxsHash...)
 			}
 			latestBlockHeight = temp[len(temp)-1].BlockHeight
 		} else {
-			// log.Printf("[Transaction puller] No more tx to process\n")
+			fmt.Println("[Transaction puller] No more tx to process ShardID, blockHeight, err", puller.ShardID, latestBlockHeight, err)
 			continue
 		}
 
 		if len(processingTxs) > 0 {
 			for _, t := range processingTxs {
+				fmt.Println("time for for ", time.Now())
 				txByID, err := puller.TransactionsStore.GetTransactionById(t)
 				if err != nil || txByID != nil {
+					fmt.Println("err get tx id: ", err)
 					continue
 				}
 				time.Sleep(500 * time.Millisecond)
@@ -118,6 +134,7 @@ func (puller *TransactionPuller) Execute() {
 					continue
 				}
 
+				fmt.Println("execute tx to db begin: ", time.Now())
 				txModel := models.Transaction{
 					ShardID:     puller.ShardID,
 					BlockHeight: tx.BlockHeight,
@@ -218,6 +235,9 @@ func (puller *TransactionPuller) Execute() {
 				}
 				txModel.CreatedTime, _ = time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
 				err = puller.TransactionsStore.StoreTransaction(&txModel)
+
+				fmt.Println("execute tx to db end: ", time.Now())
+
 				if err != nil {
 					log.Printf("[Transaction puller err] An error occured while storing tx %s, shard %d err: %+v\n", t, puller.ShardID, err)
 					continue

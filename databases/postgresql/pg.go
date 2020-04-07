@@ -19,8 +19,6 @@ func Init(config *config.Config) (*sqlx.DB, error) {
 		fmt.Println("An error occured while openning connection to pg")
 		return nil, err
 	}
-	fmt.Sprintf(`%s
-%s
-%s`, 1, 2, 2)
+	// fmt.Sprintf(`%s %s %s`, 1, 2, 2)
 	return pgConn, nil
 }

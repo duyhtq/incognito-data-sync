@@ -3,6 +3,7 @@ package agents
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/duyhtq/incognito-data-sync/entities"
@@ -66,7 +67,7 @@ func (pie *PDEInstsExtractor) Execute() {
 
 	bcHeight, err := pie.PDEInstructionsStore.GetLatestProcessedBCHeight()
 	if err != nil {
-		// log.Printf("[Instructions Extractor] An error occured while getting the latest processed beacon height: %+v \n", err)
+		log.Printf("[Instructions Extractor] An error occured while getting the latest processed beacon height: %+v \n", err)
 		return
 	}
 	if bcHeight == 0 {
@@ -76,8 +77,9 @@ func (pie *PDEInstsExtractor) Execute() {
 	}
 
 	for {
-		time.Sleep(500 * time.Millisecond)
-		// log.Printf("[Instructions Extractor] Proccessing for beacon height: %d\n", bcHeight)
+		// time.Sleep(500 * time.Millisecond)
+		time.Sleep(60 * time.Second)
+		log.Printf("[Instructions Extractor] Proccessing for beacon height: %d\n", bcHeight)
 		insts, err := pie.extractPDEInstsFromBeaconBlk(bcHeight)
 		if err != nil {
 			fmt.Println("An error occured while extracting pde instruction from chain: ", err)

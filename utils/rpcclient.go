@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -54,6 +55,10 @@ func (client *HttpClient) RPCCall(
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("________________________________________________")
+	fmt.Println("Response from BlockChain:", string(body))
+	fmt.Println("________________________________________________")
 
 	err = json.Unmarshal(body, rpcResponse)
 	if err != nil {

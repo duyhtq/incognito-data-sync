@@ -131,12 +131,12 @@ func NewServer() (*Server, error) {
 	// }
 	// agentsList = registerPDEStatePuller(rpcClient, agentsList, pdeStateStore)
 
-	// // pde instruction
-	// pdeInstructionsPGStore, err := pg.NewPDEInstructionsPGStore(db)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// agentsList = registerPDEInstsExtractor(rpcClient, agentsList, pdeInstructionsPGStore)
+	// pde instruction
+	pdeInstructionsPGStore, err := pg.NewPDEInstructionsPGStore(db)
+	if err != nil {
+		return nil, err
+	}
+	agentsList = registerPDEInstsExtractor(rpcClient, agentsList, pdeInstructionsPGStore)
 
 	// // beacon block
 	// beaconBlockStore, err := pg.NewBeaconBlockStore(db)
@@ -146,22 +146,22 @@ func NewServer() (*Server, error) {
 	// agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
 
 	// shard block: 8 shard
-	shardBlockStore, err := pg.NewShardBlockStore(db)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i <= 7; i++ {
-		agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
-	}
+	// shardBlockStore, err := pg.NewShardBlockStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for i := 0; i <= 7; i++ {
+	// 	agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
+	// }
 
 	// tx: 8 shard
-	txStore, err := pg.NewTransactionsStore(db)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i <= 7; i++ {
-		agentsList = registerTransactionPuller(i, rpcClient, agentsList, txStore)
-	}
+	// txStore, err := pg.NewTransactionsStore(db)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for i := 0; i <= 7; i++ {
+	// 	agentsList = registerTransactionPuller(i, rpcClient, agentsList, txStore)
+	// }
 
 	// Token
 	// tokenStore, err := pg.NewTokensStore(db)
