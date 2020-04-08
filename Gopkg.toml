@@ -6,3 +6,7 @@
 [[override]]
   name = "github.com/lib/pq"
   version = "v1.2.0"
+
+[[override]]
+  name = "go.uber.org/zap"
+  version = "1.9.1"
