@@ -6,3 +6,7 @@
 [[override]]
   name = "github.com/lib/pq"
   version = "v1.2.0"
+  
+[[override]]
+  name = "github.com/appleboy/gin-jwt"
+  revision = "1f7b3e975316d42a886d504284c2a42768b8d0f7"
