@@ -3,6 +3,7 @@ package postgresql
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/jmoiron/sqlx"
@@ -224,6 +225,48 @@ func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
 	return err
 }
 
+type ReportData struct {
+	Day         time.Time `db:"day"`
+	Total       int       `db:"total"`
+	TotalVolume float64   `db:"total_volume"`
+}
+
+func (st *TransactionsStore) ReportPdexTrading() ([]*ReportData, error) {
+	var sql string
+	var err error
+	result := []*ReportData{}
+
+	sql = `
+	SELECT
+		date_trunc('day', b.created_date) "day",
+		COUNT(CAST(b.created_date AS DATE)) AS total,
+		Round(SUM(b.usd_value)::NUMERIC, 2) AS total_volume
+	FROM (
+		SELECT
+			CAST(o.beacon_time_stamp AS DATE) AS created_date,
+			(((o.receive_amount + 0)::decimal / p.decimal::decimal) * p.price) AS usd_value
+		FROM
+			pde_trades AS o,
+			p_tokens AS p
+		WHERE
+			o.receiving_tokenid_str = p.token_id
+			AND o.status = 'accepted'
+		ORDER BY
+			created_date) AS b
+	GROUP BY
+		CAST(b.created_date AS DATE);
+		`
+	err = st.DB.Select(&result, sql)
+
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
+}
 func (st *TransactionsStore) UpdateCustomFiledTransaction(ID string, serialNumberList, publickeyList, coinCommitmentList []string, metaDataType int) error {
 
 	tx := st.DB.MustBegin()
