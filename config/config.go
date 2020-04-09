@@ -31,6 +31,7 @@ func GetConfig() *Config {
 type IncognitoConfig struct {
 	ChainEndpoint   string `json:"chain_endpoint"`
 	NetWorkEndPoint string `json:"network_endpoint"`
+	ApiEndPoint     string `json:"api_endpoint"`
 }
 
 type Config struct {
@@ -38,6 +39,8 @@ type Config struct {
 	Env     string `json:"env"`
 	BaseURL string `json:"base_url"`
 	Db      string `json:"db"`
+
+	SentryDSN string `json:"sentry_dsn"`
 
 	// 0. Incognito chain config:
 	Incognito IncognitoConfig `json:"incognito"`
