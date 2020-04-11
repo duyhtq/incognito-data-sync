@@ -41,7 +41,7 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID_PROD
           tag: $(echo $CIRCLE_SHA1 | cut -c -7)
           dockerfile: prod.Dockerfile
-          extra_build_args: --build-arg API_CONF_DATA
+          extra_build_args: --build-arg API_CONF_DATA_PROD
       - gcr/push-image:
           image: incognito-data-sync
           google-project-id: GOOGLE_PROJECT_ID_PROD
