@@ -1,6 +1,6 @@
 FROM golang:1.12.9-alpine AS builder
 
-ARG API_CONF_DATA
+ARG API_CONF_DATA_PROD
 
 WORKDIR /go/src/github.com/duyhtq/incognito-data-sync
 
