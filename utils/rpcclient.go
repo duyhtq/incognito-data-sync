@@ -43,6 +43,16 @@ func (client *HttpClient) RPCCall(
 		return err
 	}
 
+	fmt.Println("Request payload data:", payload)
+	fmt.Println("Request payloadInBytes data:", string(payloadInBytes))
+
+	// if b.config.Env == "localhost" {
+	// 	db, _ := httputil.DumpRequest(req, true)
+	// 	b.logger.With(zap.String("request", string(db))).Debug("post")
+	// 	fmt.Printf("string(db) = %+v\n", string(db))
+	// 	fmt.Printf("Call %+v\n", args)
+	// }
+
 	resp, err := client.Post(client.conf.Incognito.ChainEndpoint, "application/json", bytes.NewBuffer(payloadInBytes))
 
 	if err != nil {
