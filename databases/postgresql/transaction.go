@@ -267,6 +267,7 @@ func (st *TransactionsStore) ReportPdexTrading() ([]*ReportData, error) {
 		return result, nil
 	}
 }
+
 func (st *TransactionsStore) UpdateCustomFiledTransaction(ID string, serialNumberList, publickeyList, coinCommitmentList []string, metaDataType int) error {
 
 	tx := st.DB.MustBegin()
@@ -277,4 +278,36 @@ func (st *TransactionsStore) UpdateCustomFiledTransaction(ID string, serialNumbe
 	err := tx.Commit()
 
 	return err
+}
+
+type PdexVolume struct {
+	Sum   float64 `db:"total_usd"`
+	Count int     `db:"total"`
+}
+
+func (st *TransactionsStore) PdexVolume(token1str, token2str string) (float64, error) {
+
+	result := []*PdexVolume{}
+
+	var sql = `
+		SELECT
+			COALESCE(sum((((o.receive_amount + 0)::decimal / p.decimal::decimal) * p.price)), 0) AS total_usd,
+			count (*)  AS total
+		FROM
+			pde_trades AS o,
+			p_tokens AS p
+		WHERE
+			o.receiving_tokenid_str = p.token_id
+			AND o.status = 'accepted'
+			AND o.token1_id_str = $1
+			AND o.token2_id_str = $2
+			AND o.beacon_time_stamp >= NOW() - INTERVAL '24 HOURS'`
+
+	err := st.DB.Select(&result, sql, token1str, token2str)
+
+	if err != nil {
+		return 0, err
+	} else {
+		return result[0].Sum, nil
+	}
 }

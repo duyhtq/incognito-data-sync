@@ -39,7 +39,6 @@ type CronUpdatePrice struct {
 
 // NewServer is to new server instance
 func NewServer() (*CronUpdatePrice, error) {
-
 	return &CronUpdatePrice{}, nil
 }
 
