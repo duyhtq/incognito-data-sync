@@ -11,8 +11,9 @@ import (
 )
 
 func (s *Server) ReportPdexTrading(c *gin.Context) {
+	rangeFilter := c.DefaultQuery("range", "day")
 
-	transactions, err := s.transaction.ReportPdexTrading()
+	transactions, err := s.transaction.ReportPdexTrading(rangeFilter)
 	if err != nil {
 		s.logger.Error("s.transaction.ReportPdexTrading", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
