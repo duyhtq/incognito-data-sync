@@ -3,7 +3,6 @@ package postgresql
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/jmoiron/sqlx"
@@ -226,19 +225,22 @@ func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
 }
 
 type ReportData struct {
-	Day         time.Time `db:"day"`
-	Total       int       `db:"total"`
-	TotalVolume float64   `db:"total_volume"`
+	Day         string  `db:"day"`
+	Total       int     `db:"total"`
+	TotalVolume float64 `db:"total_volume"`
+	Month       int     `db:"month"`
+	Year        int     `db:"year"`
 }
 
-func (st *TransactionsStore) ReportPdexTrading() ([]*ReportData, error) {
+func (st *TransactionsStore) ReportPdexTrading(rangeFilter string) ([]*ReportData, error) {
 	var sql string
 	var err error
+	var depositQuery string
 	result := []*ReportData{}
 
 	sql = `
 	SELECT
-		date_trunc('day', b.created_date) "day",
+		%s,
 		COUNT(CAST(b.created_date AS DATE)) AS total,
 		Round(SUM(b.usd_value)::NUMERIC, 2) AS total_volume
 	FROM (
@@ -254,9 +256,20 @@ func (st *TransactionsStore) ReportPdexTrading() ([]*ReportData, error) {
 		ORDER BY
 			created_date) AS b
 	GROUP BY
-		CAST(b.created_date AS DATE);
+		%s;
 		`
-	err = st.DB.Select(&result, sql)
+	switch rangeFilter {
+	case "week":
+		depositQuery = fmt.Sprintf(sql, "TO_CHAR(DATE_TRUNC('week', b.created_date), 'YYYYWW') AS day", "DATE_TRUNC('week', b.created_date) ORDER BY day")
+	case "month":
+		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year, extract(MONTH FROM b.created_date) AS month", "extract(MONTH FROM b.created_date), extract(year FROM b.created_date) order by year, month")
+	case "year":
+		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year", "extract(YEAR FROM b.created_date)")
+	default:
+		depositQuery = fmt.Sprintf(sql, "CAST(b.created_date AS date) AS day", "CAST(b.created_date AS DATE)")
+	}
+
+	err = st.DB.Select(&result, depositQuery)
 
 	if err != nil {
 		return nil, err
