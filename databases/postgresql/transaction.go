@@ -3,6 +3,7 @@ package postgresql
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/jmoiron/sqlx"
@@ -232,10 +233,11 @@ type ReportData struct {
 	Year        int     `db:"year"`
 }
 
-func (st *TransactionsStore) ReportPdexTrading(rangeFilter string) ([]*ReportData, error) {
+func (st *TransactionsStore) ReportPdexTrading(rangeFilter, token string) ([]*ReportData, error) {
 	var sql string
 	var err error
 	var depositQuery string
+	var filter string
 	result := []*ReportData{}
 
 	sql = `
@@ -252,23 +254,30 @@ func (st *TransactionsStore) ReportPdexTrading(rangeFilter string) ([]*ReportDat
 			p_tokens AS p
 		WHERE
 			o.receiving_tokenid_str = p.token_id
-			AND o.status = 'accepted'
+			AND o.status = 'accepted' %s
 		ORDER BY
 			created_date) AS b
 	GROUP BY
 		%s;
 		`
-	switch rangeFilter {
-	case "week":
-		depositQuery = fmt.Sprintf(sql, "TO_CHAR(DATE_TRUNC('week', b.created_date), 'YYYYWW') AS day", "DATE_TRUNC('week', b.created_date) ORDER BY day")
-	case "month":
-		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year, extract(MONTH FROM b.created_date) AS month", "extract(MONTH FROM b.created_date), extract(year FROM b.created_date) order by year, month")
-	case "year":
-		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year", "extract(YEAR FROM b.created_date)")
-	default:
-		depositQuery = fmt.Sprintf(sql, "CAST(b.created_date AS date) AS day", "CAST(b.created_date AS DATE)")
+
+	if token != "" {
+		p := strings.Split(token, ",")
+		filter = fmt.Sprintf("and token1_id_str in ('%s', '%s') and token2_id_str in ('%s', '%s')", p[0], p[1], p[0], p[1])
+	} else {
+		filter = ""
 	}
 
+	switch rangeFilter {
+	case "week":
+		depositQuery = fmt.Sprintf(sql, "TO_CHAR(DATE_TRUNC('week', b.created_date), 'YYYYWW') AS day", filter, "DATE_TRUNC('week', b.created_date) ORDER BY day")
+	case "month":
+		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year, extract(MONTH FROM b.created_date) AS month", filter, "extract(MONTH FROM b.created_date), extract(year FROM b.created_date) order by year, month")
+	case "year":
+		depositQuery = fmt.Sprintf(sql, "extract(year FROM b.created_date) AS year", filter, "extract(YEAR FROM b.created_date)")
+	default:
+		depositQuery = fmt.Sprintf(sql, "CAST(b.created_date AS date) AS day", filter, "CAST(b.created_date AS DATE)")
+	}
 	err = st.DB.Select(&result, depositQuery)
 
 	if err != nil {
