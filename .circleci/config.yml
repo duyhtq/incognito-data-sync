@@ -1,0 +1,89 @@
+version: 2.1
+orbs:
+  gcr: circleci/gcp-gcr@0.6.1
+jobs:
+  build_staging:
+    machine: true
+    steps:
+      - checkout
+      - gcr/gcr-auth
+      - gcr/build-image:
+          image: incognito-data-sync
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+          dockerfile: staging.Dockerfile
+          extra_build_args: --build-arg API_CONF_DATA
+      - gcr/push-image:
+          image: incognito-data-sync
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+  deploy_staging:
+    docker:
+      - image: gcr.io/staging-incognito/deployer:0.3
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
+        environment:
+          CLUSTER: staging
+          RELEASE: incognito-data-sync
+          NAMESPACE: default
+    working_directory: /etc/deployments
+    steps:
+      - run: bash deploy.sh
+  build_prod:
+    machine: true
+    steps:
+      - checkout
+      - gcr/gcr-auth:
+          gcloud-service-key: GCLOUD_SERVICE_KEY_PROD
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_PROD
+          google-project-id: GOOGLE_PROJECT_ID_PROD
+      - gcr/build-image:
+          image: incognito-data-sync
+          google-project-id: GOOGLE_PROJECT_ID_PROD
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+          dockerfile: prod.Dockerfile
+          extra_build_args: --build-arg API_CONF_DATA_PROD
+      - gcr/push-image:
+          image: incognito-data-sync
+          google-project-id: GOOGLE_PROJECT_ID_PROD
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+  deploy_prod:
+    docker:
+      - image: gcr.io/cash-prototype/deployer:0.1
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY_PROD
+        environment:
+          CLUSTER: incognito-live-cluster
+          RELEASE: incognito-data-sync
+          NAMESPACE: default
+    working_directory: /etc/deployments
+    steps:
+      - run: bash deploy_prod.sh
+workflows:
+  version: 2
+  deploy_staging:
+    jobs:
+      - build_staging:
+          filters:
+            branches:
+              only:
+                - develop
+      - deploy_staging:
+          requires:
+            - build_staging
+  deploy_prod:
+    jobs:
+      - build_prod:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy_prod:
+          requires:
+            - build_prod
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
