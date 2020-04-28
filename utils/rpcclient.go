@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -43,8 +42,8 @@ func (client *HttpClient) RPCCall(
 		return err
 	}
 
-	fmt.Println("Request payload data:", payload)
-	fmt.Println("Request payloadInBytes data:", string(payloadInBytes))
+	// fmt.Println("Request payload data:", payload)
+	// fmt.Println("Request payloadInBytes data:", string(payloadInBytes))
 
 	// if b.config.Env == "localhost" {
 	// 	db, _ := httputil.DumpRequest(req, true)
@@ -66,9 +65,9 @@ func (client *HttpClient) RPCCall(
 		return err
 	}
 
-	fmt.Println("________________________________________________")
-	fmt.Println("Response from BlockChain:", string(body))
-	fmt.Println("________________________________________________")
+	// fmt.Println("________________________________________________")
+	// fmt.Println("Response from BlockChain:", string(body))
+	// fmt.Println("________________________________________________")
 
 	err = json.Unmarshal(body, rpcResponse)
 	if err != nil {
