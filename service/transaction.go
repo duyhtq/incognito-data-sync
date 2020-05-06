@@ -20,8 +20,8 @@ func NewTransactionService(conf *config.Config, transaction *postgresql.Transact
 	}
 }
 
-func (t *Transaction) ReportPdexTrading(rangeFilter string) ([]*postgresql.ReportData, error) {
-	return t.transaction.ReportPdexTrading(rangeFilter)
+func (t *Transaction) ReportPdexTrading(rangeFilter, token string) ([]*postgresql.ReportData, error) {
+	return t.transaction.ReportPdexTrading(rangeFilter, token)
 }
 
 func (t *Transaction) PdexVolume(token1str, token2str string) (float64, error) {
