@@ -290,6 +290,40 @@ func (st *TransactionsStore) ReportPdexTrading(rangeFilter, token string) ([]*Re
 	}
 }
 
+func (st *TransactionsStore) Report24h() ([]*ReportData, error) {
+	var sql string
+	var err error
+	result := []*ReportData{}
+
+	sql = `
+			SELECT
+			COUNT(CAST(b.created_date AS DATE)) AS total,
+			Round(SUM(b.usd_value)::NUMERIC, 2) AS total_volume
+		FROM (
+			SELECT
+				CAST(o.beacon_time_stamp AS DATE) AS created_date,
+				(((o.receive_amount + 0)::decimal / p.decimal::decimal) * p.price) AS usd_value
+			FROM
+				pde_trades AS o,
+				p_tokens AS p
+			WHERE
+				o.receiving_tokenid_str = p.token_id
+				AND o.status = 'accepted' and o.beacon_time_stamp >= NOW() - INTERVAL '24 HOURS'
+			ORDER BY
+				created_date) AS b
+		`
+	err = st.DB.Select(&result, sql)
+
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
+}
+
 func (st *TransactionsStore) UpdateCustomFiledTransaction(ID string, serialNumberList, publickeyList, coinCommitmentList []string, metaDataType int) error {
 
 	tx := st.DB.MustBegin()

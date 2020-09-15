@@ -27,6 +27,20 @@ func (s *Server) ReportPdexTrading(c *gin.Context) {
 		},
 	})
 }
+func (s *Server) Pdex24h(c *gin.Context) {
+	transactions, err := s.transaction.Report24h()
+	if err != nil {
+		s.logger.Error("s.transaction.Report24h", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
 
 func (s *Server) PdexVolume(c *gin.Context) {
 	token1str := c.DefaultQuery("token1str", "")
