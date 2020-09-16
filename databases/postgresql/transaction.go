@@ -298,7 +298,7 @@ func (st *TransactionsStore) Report24h() ([]*ReportData, error) {
 	sql = `
 			SELECT
 			COUNT(CAST(b.created_date AS DATE)) AS total,
-			Round(SUM(b.usd_value)::NUMERIC, 2) AS total_volume
+			coalesce(Round(SUM(b.usd_value)::NUMERIC, 2), 0) AS total_volume
 		FROM (
 			SELECT
 				CAST(o.beacon_time_stamp AS DATE) AS created_date,
