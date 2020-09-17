@@ -77,6 +77,9 @@ jobs:
           CLUSTER: staging
           RELEASE: incognito-data-sync
           NAMESPACE: mainnet
+    working_directory: /etc/deployments
+    steps:
+      - run: bash deploy.sh
   build_prod:
     machine: true
     steps:
