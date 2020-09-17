@@ -35,7 +35,7 @@ jobs:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
         environment:
-          CLUSTER: staging
+          GKE_CLUSTER: staging
           RELEASE: incognito-data-sync
           NAMESPACE: default
     working_directory: /etc/deployments
@@ -74,7 +74,7 @@ jobs:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
         environment:
-          CLUSTER: staging
+          GKE_CLUSTER: staging
           RELEASE: incognito-data-sync
           NAMESPACE: mainnet
     working_directory: /etc/deployments
