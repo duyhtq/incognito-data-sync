@@ -131,7 +131,7 @@ workflows:
           filters:
             branches:
               only:
-                - develop
+                - master
       - deploy_staging_mainnet:
           requires:
             - build_staging_mainnet
