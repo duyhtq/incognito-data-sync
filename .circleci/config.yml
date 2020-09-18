@@ -6,25 +6,79 @@ jobs:
     machine: true
     steps:
       - checkout
+      - run:
+          name: Setup Environment Variables
+          command: |
+            if [[ "$CIRCLE_TAG" == v* ]]; then
+              echo "export CONF=$PROD_API_CONF_DATA" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$PROD_API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            elif [[ "$CIRCLE_TAG" == testnet* ]]; then
+              echo "export CONF=$TESTNET_API_CONF_DATA" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$TESTNET_API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            else
+              echo "export CONF=$API_CONF_DATA" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            fi
       - gcr/gcr-auth
       - gcr/build-image:
           image: incognito-data-sync
-          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
           dockerfile: staging.Dockerfile
           extra_build_args: --build-arg API_CONF_DATA
       - gcr/push-image:
           image: incognito-data-sync
-          tag: $(echo $CIRCLE_SHA1 | cut -c -7)
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
   deploy_staging:
     docker:
-      - image: gcr.io/staging-incognito/deployer:0.3
+      - image: gcr.io/staging-incognito/deployer:latest
         auth:
           username: _json_key
           password: $GCLOUD_SERVICE_KEY
         environment:
-          CLUSTER: staging
+          GKE_CLUSTER: staging
+          GKE_ZONE: us-central1-c
           RELEASE: incognito-data-sync
           NAMESPACE: default
+    working_directory: /etc/deployments
+    steps:
+      - run: bash deploy.sh
+  build_staging_mainnet:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Setup Environment Variables
+          command: |
+            if [[ "$CIRCLE_TAG" == v* ]]; then
+              echo "export CONF=$PROD_API_CONF_DATA" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$PROD_API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            elif [[ "$CIRCLE_TAG" == testnet* ]]; then
+              echo "export CONF=$TESTNET_API_CONF_DATA" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$TESTNET_API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            else
+              echo "export CONF=$API_CONF_DATA_STAGING_MAINNET" >> $BASH_ENV
+              echo "export API_GCLOUD_KEY=$API_GCLOUD_SERVICE_KEY" >> $BASH_ENV
+            fi
+      - gcr/gcr-auth
+      - gcr/build-image:
+          image: incognito-data-sync
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
+          dockerfile: staging.Dockerfile
+          extra_build_args: --build-arg API_CONF_DATA=${CONF}
+      - gcr/push-image:
+          image: incognito-data-sync
+          tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
+  deploy_staging_mainnet:
+    docker:
+      - image: gcr.io/staging-incognito/deployer:latest
+        auth:
+          username: _json_key
+          password: $GCLOUD_SERVICE_KEY
+        environment:
+          GKE_CLUSTER: staging
+          GKE_ZONE: us-central1-c
+          RELEASE: incognito-data-sync
+          NAMESPACE: mainnet
     working_directory: /etc/deployments
     steps:
       - run: bash deploy.sh
@@ -71,6 +125,16 @@ workflows:
       - deploy_staging:
           requires:
             - build_staging
+  deploy_staging_mainnet:
+    jobs:
+      - build_staging_mainnet:
+          filters:
+            branches:
+              only:
+                - develop
+      - deploy_staging_mainnet:
+          requires:
+            - build_staging_mainnet
   deploy_prod:
     jobs:
       - build_prod:

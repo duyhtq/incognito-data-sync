@@ -23,6 +23,9 @@ func NewTransactionService(conf *config.Config, transaction *postgresql.Transact
 func (t *Transaction) ReportPdexTrading(rangeFilter, token string) ([]*postgresql.ReportData, error) {
 	return t.transaction.ReportPdexTrading(rangeFilter, token)
 }
+func (t *Transaction) Report24h() ([]*postgresql.ReportData, error) {
+	return t.transaction.Report24h()
+}
 
 func (t *Transaction) PdexVolume(token1str, token2str string) (float64, error) {
 	return t.transaction.PdexVolume(token1str, token2str)

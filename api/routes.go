@@ -6,6 +6,8 @@ func (s *Server) Routes() {
 
 	s.g.GET("/pdex-trading", s.ReportPdexTrading)
 
+	s.g.GET("/pdex-24h", s.Pdex24h)
+
 	s.g.GET("/pdex-volume", s.PdexVolume)
 
 	s.g.GET("/ping", func(c *gin.Context) {
