@@ -45,7 +45,7 @@ func NewServer() (*CronUpdatePrice, error) {
 func main() {
 	c := cron.New()
 
-	if _, err := c.AddFunc("@daily", func() {
+	if _, err := c.AddFunc("@every 3h", func() {
 		run()
 	}); err != nil {
 		fmt.Println("err", err)
