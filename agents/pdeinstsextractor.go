@@ -77,8 +77,8 @@ func (pie *PDEInstsExtractor) Execute() {
 	}
 
 	for {
-		time.Sleep(500 * time.Millisecond)
-		// time.Sleep(60 * time.Second)
+		// time.Sleep(10 * time.Millisecond)
+		time.Sleep(3 * time.Second)
 		log.Printf("[Instructions Extractor] Proccessing for beacon height: %d\n", bcHeight)
 		insts, err := pie.extractPDEInstsFromBeaconBlk(bcHeight)
 		if err != nil {
@@ -102,6 +102,77 @@ func (pie *PDEInstsExtractor) Execute() {
 				BeaconHeight:        trade.BeaconHeight,
 				BeaconTimeStamp:     time.Unix(insts.BeaconTimeStamp, 0),
 			}
+			err := pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
+			if err != nil {
+				fmt.Println("An error occured while storing pde trade")
+				continue
+			}
+		}
+		for _, trade := range insts.PDERefundedTradesV2 {
+			time.Sleep(1 * time.Second)
+			tradeModel := models.PDETrade{
+				TraderAddressStr:    trade.TraderAddressStr,
+				ReceivingTokenIDStr: trade.TokenIDStr,
+				ReceiveAmount:       trade.ReceiveAmount,
+				Token1IDStr:         trade.TokenIDStr,
+				Token2IDStr:         trade.TokenIDStr,
+				ShardID:             trade.ShardID,
+				RequestedTxID:       trade.RequestedTxID,
+				Status:              trade.Status,
+				BeaconHeight:        trade.BeaconHeight,
+				BeaconTimeStamp:     time.Unix(insts.BeaconTimeStamp, 0),
+			}
+			err := pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
+			if err != nil {
+				fmt.Println("An error occured while storing pde trade")
+				continue
+			}
+		}
+		for _, trade := range insts.PDEAcceptedTradesV2 {
+			time.Sleep(1 * time.Second)
+			var tradeModel models.PDETrade
+			if len(trade.TradePaths) == 1 {
+				tradeModel = models.PDETrade{
+					TraderAddressStr:    trade.TraderAddressStr,
+					ReceivingTokenIDStr: trade.TradePaths[0].TokenIDToBuyStr,
+					ReceiveAmount:       trade.TradePaths[0].ReceiveAmount,
+					Token1IDStr:         trade.TradePaths[0].Token1IDStr,
+					Token2IDStr:         trade.TradePaths[0].Token2IDStr,
+					ShardID:             trade.ShardID,
+					RequestedTxID:       trade.RequestedTxID,
+					Status:              trade.Status,
+					BeaconHeight:        trade.BeaconHeight,
+					BeaconTimeStamp:     time.Unix(insts.BeaconTimeStamp, 0),
+				}
+			} else {
+				var Token1IDStr, Token2IDStr, ReceivingTokenIDStr string
+				var ReceiveAmount uint64
+				if trade.TradePaths[0].TokenIDToBuyStr == "0000000000000000000000000000000000000000000000000000000000000004" {
+					Token1IDStr = trade.TradePaths[0].Token2IDStr
+					Token2IDStr = trade.TradePaths[1].Token2IDStr
+					ReceivingTokenIDStr = trade.TradePaths[1].TokenIDToBuyStr
+					ReceiveAmount = trade.TradePaths[1].ReceiveAmount
+
+				} else {
+					Token1IDStr = trade.TradePaths[1].Token2IDStr
+					Token2IDStr = trade.TradePaths[0].Token2IDStr
+					ReceivingTokenIDStr = trade.TradePaths[0].TokenIDToBuyStr
+					ReceiveAmount = trade.TradePaths[0].ReceiveAmount
+				}
+				tradeModel = models.PDETrade{
+					TraderAddressStr:    trade.TraderAddressStr,
+					ReceivingTokenIDStr: ReceivingTokenIDStr,
+					ReceiveAmount:       ReceiveAmount,
+					Token1IDStr:         Token1IDStr,
+					Token2IDStr:         Token2IDStr,
+					ShardID:             trade.ShardID,
+					RequestedTxID:       trade.RequestedTxID,
+					Status:              trade.Status,
+					BeaconHeight:        trade.BeaconHeight,
+					BeaconTimeStamp:     time.Unix(insts.BeaconTimeStamp, 0),
+				}
+			}
+
 			err := pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
 			if err != nil {
 				fmt.Println("An error occured while storing pde trade")
