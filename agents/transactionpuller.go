@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/duyhtq/incognito-data-sync/databases/postgresql"
@@ -20,6 +23,7 @@ type TransactionsStore interface {
 	ListProcessingTxByHeight(shardID int, blockHeight uint64) (*postgresql.ListProcessingTx, error)
 	ListNeedProcessingTxByHeight(shardID int, blockHeight uint64) ([]*postgresql.ListProcessingTx, error)
 	GetTransactionById(txID string) (*models.ShortTransaction, error)
+	GetToken(token string) (*models.PToken, error)
 }
 
 type TransactionPuller struct {
@@ -27,6 +31,15 @@ type TransactionPuller struct {
 	TransactionsStore TransactionsStore
 	ShardID           int
 }
+
+const (
+	IssuingResponseMeta    = 25 // shields ota
+	IssuingETHResponseMeta = 81 // shields eta
+
+	ContractingRequestMeta = 26  // centralized: btc, xmr...
+	BurningRequestMeta     = 27  // eta
+	BurningRequestMetaV2   = 240 // eta
+)
 
 func NewTransactionPuller(name string,
 	frequency int,
@@ -59,8 +72,84 @@ func (puller *TransactionPuller) getTransaction(txHash string) (*entities.Transa
 	return shardBlockRes.Result, nil
 }
 
+func (puller *TransactionPuller) GetPrice(name, date string) (float64, error) {
+	client := &http.Client{}
+	url := fmt.Sprintf("https://api.coingecko.com/api/v3/coins/%s/history?date=%s", name, date)
+	fmt.Println(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Print(err)
+		return 0, err
+	}
+	req.Header.Set("Accepts", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request to server")
+		return 0, err
+	}
+	if resp.Status != "200 OK" {
+		return 0, err
+	}
+	respBody, _ := ioutil.ReadAll(resp.Body)
+
+	type CurrentPrice struct {
+		USD float64 `json:"usd"`
+	}
+	type MarketData struct {
+		CurrentPrice CurrentPrice `json:"current_price"`
+	}
+	type CoingeckoResp struct {
+		MarketData MarketData `json:"market_data"`
+	}
+
+	var exchangeRateResp CoingeckoResp
+	if err := json.Unmarshal(respBody, &exchangeRateResp); err != nil {
+		fmt.Println("error Unmarshal body ....", err)
+		return 0, err
+	}
+	return exchangeRateResp.MarketData.CurrentPrice.USD, nil
+}
+
+type InfoCoin struct {
+	ID     string `json:"id"`
+	Symbol string `json:"symbol"`
+}
+type MetaData struct {
+	Type          int     `json:"Type"`
+	BurnedAmount  float64 `json:"BurnedAmount"`
+	BurningAmount float64 `json:"BurningAmount"`
+	TokenID       string  `json:"TokenID"`
+}
+
+func (puller *TransactionPuller) GetDataCoin() ([]InfoCoin, error) {
+	client := &http.Client{}
+	url := fmt.Sprintf("https://api.coingecko.com/api/v3/coins/list")
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+	req.Header.Set("Accepts", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request to server")
+		return nil, err
+	}
+	if resp.Status != "200 OK" {
+		return nil, err
+	}
+	respBody, _ := ioutil.ReadAll(resp.Body)
+
+	var respone []InfoCoin
+	if err := json.Unmarshal(respBody, &respone); err != nil {
+		fmt.Println("error Unmarshal body ....", err)
+		return nil, err
+	}
+	return respone, nil
+}
+
 func (puller *TransactionPuller) Execute() {
-	fmt.Println("time1: ", time.Now())
+	// fmt.Println("time1: ", time.Now())
 	fmt.Println("[Transaction puller] Agent is executing...")
 
 	processingTxs := []string{}
@@ -102,7 +191,7 @@ func (puller *TransactionPuller) Execute() {
 
 	latestBlockHeight += 1
 	for {
-		fmt.Println("for.....")
+		fmt.Println("for.....", latestBlockHeight)
 		fmt.Println("time for ", time.Now())
 		start := time.Now()
 		temp, err := puller.TransactionsStore.ListNeedProcessingTxByHeight(puller.ShardID, latestBlockHeight)
@@ -116,6 +205,7 @@ func (puller *TransactionPuller) Execute() {
 			latestBlockHeight = temp[len(temp)-1].BlockHeight
 		} else {
 			fmt.Println("[Transaction puller] No more tx to process ShardID, blockHeight, err", puller.ShardID, latestBlockHeight, err)
+			latestBlockHeight++
 			continue
 		}
 
@@ -136,19 +226,18 @@ func (puller *TransactionPuller) Execute() {
 
 				fmt.Println("execute tx to db begin: ", time.Now())
 				txModel := models.Transaction{
-					ShardID:     puller.ShardID,
-					BlockHeight: tx.BlockHeight,
-					BlockHash:   tx.BlockHash,
-					Info:        tx.Info,
-					TxID:        tx.Hash,
-					TxType:      tx.Type,
-					TxVersion:   tx.Version,
-					PRVFee:      tx.Fee,
-					//Data:
-					Proof: &tx.Proof,
-					//ProofDetail: tx.ProofDetail
+					ShardID:                  puller.ShardID,
+					BlockHeight:              tx.BlockHeight,
+					BlockHash:                tx.BlockHash,
+					Info:                     tx.Info,
+					TxID:                     tx.Hash,
+					TxType:                   tx.Type,
+					TxVersion:                tx.Version,
+					PRVFee:                   tx.Fee,
+					Proof:                    &tx.Proof,
 					TransactedPrivacyCoinFee: tx.PrivacyCustomTokenFee,
 					//TransactedPrivacyCoinProofDetail: tx.PrivacyCustomTokenProofDetail,
+					//ProofDetail: tx.ProofDetail
 				}
 				dataJson, err := json.Marshal(tx)
 				if err == nil {
@@ -157,16 +246,67 @@ func (puller *TransactionPuller) Execute() {
 
 				if len(tx.Metadata) > 0 {
 					txModel.Metadata = &tx.Metadata
-
-					// get meta data type:
-					type MetaData struct {
-						Type int `json:"Type"`
-					}
 					data := &MetaData{Type: 0}
 					err := json.Unmarshal([]byte(tx.Metadata), data)
 					if err == nil {
 						txModel.MetaDataType = data.Type
 					}
+				}
+				fmt.Println("MetaDataType", txModel.MetaDataType)
+				if txModel.MetaDataType == IssuingResponseMeta || txModel.MetaDataType == IssuingETHResponseMeta {
+					type PrivacyCustomTokenData struct {
+						Amount       float64 `json:"Amount"`
+						PropertyID   string  `json:"PropertyID"`
+						PropertyName string  `json:"PropertyName"`
+					}
+					data := &PrivacyCustomTokenData{}
+					_ = json.Unmarshal([]byte(tx.PrivacyCustomTokenData), data)
+					token, _ := puller.TransactionsStore.GetToken(data.PropertyID)
+
+					txModel.AmountSheld = data.Amount / token.Decimal
+					txModel.ShieldType = 1
+					txModel.TokenName = token.Name
+					txModel.TokenID = data.PropertyID
+					dataCoin, _ := puller.GetDataCoin()
+					var coinID string
+					for _, coinDetail := range dataCoin {
+						if coinDetail.Symbol == strings.ToLower(token.Symbol) {
+							coinID = coinDetail.ID
+						}
+					}
+					timeDate, _ := time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
+					price, _ := puller.GetPrice(coinID, timeDate.Format("02-01-2006"))
+					txModel.Price = price
+				}
+
+				if txModel.MetaDataType == ContractingRequestMeta || txModel.MetaDataType == BurningRequestMeta || txModel.MetaDataType == BurningRequestMetaV2 {
+					data := &MetaData{}
+					err := json.Unmarshal([]byte(tx.Metadata), data)
+					if err != nil {
+						log.Printf("[Transaction puller] An error occured while getting transaction %s : %+v\n", t, err)
+						continue
+					}
+					token, _ := puller.TransactionsStore.GetToken(data.TokenID)
+					if txModel.MetaDataType == ContractingRequestMeta {
+						txModel.AmountSheld = data.BurnedAmount / token.Decimal
+					} else {
+						txModel.AmountSheld = data.BurningAmount / token.Decimal
+					}
+					txModel.ShieldType = 2
+					txModel.TokenName = token.Name
+					txModel.TokenID = data.TokenID
+					dataCoin, _ := puller.GetDataCoin()
+					var coinID string
+					for _, coinDetail := range dataCoin {
+						if coinDetail.Symbol == strings.ToLower(token.Symbol) {
+							coinID = coinDetail.ID
+						}
+					}
+					fmt.Println("coinID", token.Symbol, coinID)
+					timeDate, _ := time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
+					fmt.Println("timeDate", timeDate)
+					price, _ := puller.GetPrice(coinID, timeDate.Format("02-01-2006"))
+					txModel.Price = price
 				}
 
 				// Begin custom data =========================================

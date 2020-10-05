@@ -30,3 +30,16 @@ func (t *Transaction) Report24h() ([]*postgresql.ReportData, error) {
 func (t *Transaction) PdexVolume(token1str, token2str string) (float64, error) {
 	return t.transaction.PdexVolume(token1str, token2str)
 }
+
+func (t *Transaction) PdexTradingV2(rangeFilter, token string) ([]*postgresql.ReportData, error) {
+	return t.transaction.PdexTradingV2(rangeFilter, token)
+}
+func (t *Transaction) Report24hV2() ([]*postgresql.ReportData, error) {
+	return t.transaction.Report24hV2()
+}
+func (t *Transaction) Shield() ([]*postgresql.ReportData, error) {
+	return t.transaction.Shield()
+}
+func (t *Transaction) Unshield() ([]*postgresql.ReportData, error) {
+	return t.transaction.Unshield()
+}

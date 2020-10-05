@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 
 	config "github.com/duyhtq/incognito-data-sync/config"
 	pg "github.com/duyhtq/incognito-data-sync/databases/postgresql"
+	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/robfig/cron"
 )
 
@@ -44,14 +46,12 @@ func NewServer() (*CronUpdatePrice, error) {
 
 func main() {
 	c := cron.New()
-
-	if _, err := c.AddFunc("@every 3h", func() {
+	if _, err := c.AddFunc("@every 30m", func() {
 		run()
 	}); err != nil {
 		fmt.Println("err", err)
 	}
 	c.Start()
-
 	select {}
 }
 
@@ -81,22 +81,21 @@ func run() {
 			return
 		}
 		if id == 0 {
-			// fmt.Println("create", ptoken.Name, ptoken.TokenID)
-			// pTokenModel := models.PToken{
-			// 	TokenID:  ptoken.TokenID,
-			// 	Name:     ptoken.Symbol,
-			// 	Symbol:   ptoken.Symbol,
-			// 	Decimal:  ptoken.Decimals,
-			// 	Price:    ptoken.PriceUsd,
-			// 	PDecimal: ptoken.PDecimals,
-			// }
-			// err = pTokenStore.StorePToken(&pTokenModel)
-			// if err != nil {
-			// 	fmt.Println("StorePToken err:", err)
-			// }
+			fmt.Println("create", ptoken.Name, ptoken.TokenID)
+			pTokenModel := models.PToken{
+				TokenID: ptoken.TokenID,
+				Name:    ptoken.Symbol,
+				Symbol:  ptoken.Symbol,
+				Decimal: math.Pow10(int(ptoken.PDecimals)),
+				Price:   ptoken.PriceUsd,
+			}
+			err = pTokenStore.StorePToken(&pTokenModel)
+			if err != nil {
+				fmt.Println("StorePToken err:", err)
+			}
 		} else {
 			fmt.Println("update", ptoken.Name)
-			err = pTokenStore.UpdatePToken(id, ptoken.PriceUsd)
+			err = pTokenStore.UpdatePToken(id, ptoken.PriceUsd, math.Pow10(int(ptoken.PDecimals)))
 			if err != nil {
 				continue
 			} else {
