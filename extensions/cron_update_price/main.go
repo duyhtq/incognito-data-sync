@@ -46,7 +46,7 @@ func NewServer() (*CronUpdatePrice, error) {
 
 func main() {
 	c := cron.New()
-	if _, err := c.AddFunc("@every 30m", func() {
+	if err := c.AddFunc("@every 30m", func() {
 		run()
 	}); err != nil {
 		fmt.Println("err", err)
