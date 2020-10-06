@@ -35,12 +35,37 @@ type PDEContributionInst struct {
 	Status                string
 	BeaconHeight          int64
 }
-
+type PDERefunded struct {
+	TraderAddressStr string
+	TokenIDStr       string
+	ReceiveAmount    uint64
+	ShardID          byte
+	RequestedTxID    string
+	Status           string
+	BeaconHeight     uint64
+}
+type TradePath struct {
+	TokenIDToBuyStr string
+	ReceiveAmount   uint64
+	SellAmount      uint64
+	Token1IDStr     string
+	Token2IDStr     string
+}
+type PDEAccepted struct {
+	TraderAddressStr string
+	ShardID          byte
+	RequestedTxID    string
+	Status           string
+	BeaconHeight     uint64
+	TradePaths       []TradePath
+}
 type PDEInfoFromBeaconBlock struct {
-	PDEContributions []*PDEContributionInst
-	PDETrades        []*PDETradeInst
-	PDEWithdrawals   []*PDEWithdrawalInst
-	BeaconTimeStamp  int64
+	PDEContributions    []*PDEContributionInst
+	PDETrades           []*PDETradeInst
+	PDEAcceptedTradesV2 []*PDEAccepted
+	PDERefundedTradesV2 []*PDERefunded
+	PDEWithdrawals      []*PDEWithdrawalInst
+	BeaconTimeStamp     int64
 }
 
 type PDEExtractedInstsRes struct {
