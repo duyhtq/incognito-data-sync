@@ -13,4 +13,6 @@ type PDETrade struct {
 	Status              string    `db:"status"`
 	BeaconHeight        uint64    `db:"beacon_height"`
 	BeaconTimeStamp     time.Time `db:"beacon_time_stamp"`
+	Price               float64   `db:"price"`
+	Amount              float64   `db:"amount"`
 }

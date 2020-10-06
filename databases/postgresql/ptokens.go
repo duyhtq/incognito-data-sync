@@ -24,14 +24,14 @@ func (st *PTokensStore) StorePToken(token *models.PToken) error {
 	_, err := tx.NamedQuery(sqlStr, token)
 	return err
 }
-func (st *PTokensStore) UpdatePToken(id int, price float64) error {
+func (st *PTokensStore) UpdatePToken(id int, price float64, decimal float64) error {
 	sqlStr := `
-		UPDATE p_tokens SET price=$1 WHERE id=$2
+		UPDATE p_tokens SET price=$1, decimal= $2 WHERE id=$3
 		RETURNING id
 	`
 	tx := st.DB.MustBegin()
 	defer tx.Commit()
-	_, err := tx.Exec(sqlStr, price, id)
+	_, err := tx.Exec(sqlStr, price, decimal, id)
 	return err
 }
 func (st *PTokensStore) GetPtoken(PtokenID string) (int, error) {

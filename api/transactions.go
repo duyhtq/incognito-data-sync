@@ -58,3 +58,63 @@ func (s *Server) PdexVolume(c *gin.Context) {
 		Result: volume,
 	})
 }
+
+func (s *Server) PdexTradingV2(c *gin.Context) {
+	rangeFilter := c.DefaultQuery("range", "day")
+	token := c.DefaultQuery("token", "")
+
+	transactions, err := s.transaction.PdexTradingV2(rangeFilter, token)
+	if err != nil {
+		s.logger.Error("s.transaction.PdexTradingV2", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+func (s *Server) Pdex24hV2(c *gin.Context) {
+	transactions, err := s.transaction.Report24hV2()
+	if err != nil {
+		s.logger.Error("s.transaction.Pdex24hV2", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+func (s *Server) Shield(c *gin.Context) {
+	transactions, err := s.transaction.Shield()
+	if err != nil {
+		s.logger.Error("s.transaction.Shield", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+func (s *Server) Unshield(c *gin.Context) {
+	transactions, err := s.transaction.Unshield()
+	if err != nil {
+		s.logger.Error("s.transaction.Unshield", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
