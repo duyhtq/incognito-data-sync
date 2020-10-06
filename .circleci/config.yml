@@ -24,7 +24,7 @@ jobs:
           image: incognito-data-sync
           tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
           dockerfile: staging.Dockerfile
-          extra_build_args: --build-arg API_CONF_DATA
+          extra_build_args: --build-arg API_CONF_DATA --build-arg GITHUB_TOKEN
       - gcr/push-image:
           image: incognito-data-sync
           tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
@@ -64,7 +64,7 @@ jobs:
           image: incognito-data-sync
           tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
           dockerfile: staging.Dockerfile
-          extra_build_args: --build-arg API_CONF_DATA=${CONF}
+          extra_build_args: --build-arg API_CONF_DATA=${CONF} --build-arg GITHUB_TOKEN
       - gcr/push-image:
           image: incognito-data-sync
           tag: $(echo $CIRCLE_SHA1 | cut -c -7)-$(echo -n ${CONF} | sha256sum | cut -c -7)
