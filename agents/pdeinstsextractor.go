@@ -77,6 +77,22 @@ func (pie *PDEInstsExtractor) extractPDEInstsFromBeaconBlk(beaconHeight uint64) 
 	}
 	return pdeExtractedInstsRes.Result, nil
 }
+func (pie *PDEInstsExtractor) getPDEState(beaconHeight uint64) (*entities.PDEState, error) {
+	params := []interface{}{
+		map[string]interface{}{
+			"BeaconHeight": beaconHeight,
+		},
+	}
+	var pdeStateRes entities.PDEStateRes
+	err := pie.RPCClient.RPCCall("getpdestate", params, &pdeStateRes)
+	if err != nil {
+		return nil, err
+	}
+	if pdeStateRes.RPCError != nil {
+		return nil, errors.New(pdeStateRes.RPCError.Message)
+	}
+	return pdeStateRes.Result, nil
+}
 
 // Execute is to pull pde state from incognito chain and put into db
 func (pie *PDEInstsExtractor) Execute() {
@@ -325,6 +341,8 @@ func GetPdexState(beaconHeght int32) (float64, error) {
 	client := &http.Client{}
 	bc := incognito.NewBlockchain(client, "http://51.83.237.20:9944/", "", "", "https://mainnet.incognito.org/", "0000000000000000000000000000000000000000000000000000000000000004")
 	pde, err := bc.GetPdeState(beaconHeght)
+	// pde, err := pie.GetPdeState(beaconHeght)
+	// getPDEState
 	if err != nil {
 		return 0, err
 	}
