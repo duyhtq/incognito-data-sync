@@ -21,6 +21,7 @@ RUN echo -n "$API_CONF_DATA" | base64 -d > config/conf.json
 
 RUN go build -o server server.go
 RUN go build -o cron-sync-ptrade ./extensions/cron_sync_ptrade/*.go
+RUN go build -o cron-sync-data ./extensions/cron_sync_data/*.go
 RUN go build -o cron-update-price ./extensions/cron_update_price/*.go
 
 FROM alpine:3.12.0
@@ -31,6 +32,7 @@ WORKDIR /app
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/cron-sync-ptrade .
+COPY --from=builder /app/cron-sync-data .
 COPY --from=builder /app/cron-update-price .
 COPY --from=builder /app/config/conf.json ./config/conf.json
 
