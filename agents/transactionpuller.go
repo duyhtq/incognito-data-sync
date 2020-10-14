@@ -205,7 +205,6 @@ func (puller *TransactionPuller) Execute() {
 			latestBlockHeight = temp[len(temp)-1].BlockHeight
 		} else {
 			fmt.Println("[Transaction puller] No more tx to process ShardID, blockHeight, err", puller.ShardID, latestBlockHeight, err)
-			latestBlockHeight++
 			continue
 		}
 

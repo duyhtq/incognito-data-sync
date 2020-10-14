@@ -109,8 +109,7 @@ func (pie *PDEInstsExtractor) Execute() {
 	}
 
 	for {
-		time.Sleep(500 * time.Millisecond)
-		// time.Sleep(5 * time.Second)
+		time.Sleep(5 * time.Second)
 		log.Printf("[Instructions Extractor] Proccessing for beacon height: %d\n", bcHeight)
 		insts, err := pie.extractPDEInstsFromBeaconBlk(bcHeight)
 		if err != nil {
