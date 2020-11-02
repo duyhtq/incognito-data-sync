@@ -14,6 +14,12 @@ func (s *Server) Routes() {
 	s.g.GET("/shield", s.Shield)
 	s.g.GET("/unshield", s.Unshield)
 
+	s.g.GET("/shield-24h", s.Shield24h)
+	s.g.GET("/unshield-24h", s.Unshield24h)
+
+	s.g.GET("/shield-month", s.ShieldMonth)
+	s.g.GET("/unshield-month", s.UnshieldMonth)
+
 	s.g.GET("/pdex-volume", s.PdexVolume)
 
 	s.g.GET("/ping", func(c *gin.Context) {

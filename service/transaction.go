@@ -38,8 +38,20 @@ func (t *Transaction) Report24hV2() ([]*postgresql.ReportData, error) {
 	return t.transaction.Report24hV2()
 }
 func (t *Transaction) Shield() ([]*postgresql.ReportData, error) {
-	return t.transaction.Shield()
+	return t.transaction.Shield(1)
 }
 func (t *Transaction) Unshield() ([]*postgresql.ReportData, error) {
-	return t.transaction.Unshield()
+	return t.transaction.Shield(2)
+}
+func (t *Transaction) Shield24h() ([]*postgresql.ReportData, error) {
+	return t.transaction.Shield24h(1)
+}
+func (t *Transaction) Unshield24h() ([]*postgresql.ReportData, error) {
+	return t.transaction.Shield24h(2)
+}
+func (t *Transaction) ShieldMonth() ([]*postgresql.ReportData, error) {
+	return t.transaction.ShieldMonth(1)
+}
+func (t *Transaction) UnshieldMonth() ([]*postgresql.ReportData, error) {
+	return t.transaction.ShieldMonth(2)
 }
