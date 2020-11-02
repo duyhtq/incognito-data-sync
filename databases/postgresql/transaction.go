@@ -205,7 +205,6 @@ func (st *TransactionsStore) GetTransactions() ([]*models.ShortTransaction, erro
 	// 	return result, nil
 	// }
 }
-
 func (st *TransactionsStore) GetTransactionsNotFix() ([]*models.ShortTransaction, error) {
 	sql := "SELECT id, tx_id, data, meta_data_type, created_time, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions where meta_data_type in (25,81, 26, 27, 240)  and shield_type IS NULL"
 	result := []*models.ShortTransaction{}
@@ -217,33 +216,22 @@ func (st *TransactionsStore) GetTransactionsNotFix() ([]*models.ShortTransaction
 	return result, nil
 }
 
+func (st *TransactionsStore) GetTransac() ([]*models.Transaction, error) {
+	sql := "SELECT id, tx_id, data, meta_data_type, created_time, token_id, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions where price=0 and shield_type in (1, 2)"
+	result := []*models.Transaction{}
+	err := st.DB.Select(&result, sql)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return result, nil
+}
+
 func (st *TransactionsStore) StoreTransaction(txs *models.Transaction) error {
-
-	// fmt.Println(txs.Data, txs.TxID, txs.TxVersion, txs.ShardID, txs.TxType, txs.PRVFee, txs.Info, txs.Proof, txs.ProofDetail, txs.Metadata, txs.TransactedPrivacyCoin, txs.TransactedPrivacyCoinProofDetail, txs.TransactedPrivacyCoinFee, txs.CreatedTime, txs.BlockHeight, txs.BlockHash, pq.Array(txs.SerialNumberList), pq.Array(txs.PublickeyList), pq.Array(txs.CoinCommitmentList), txs.MetaDataType)
-	fmt.Println("========================================")
-
-	// sqlStr := `
-	// 	INSERT INTO transactions (data, tx_id, tx_version, shard_id, tx_type, prv_fee, info, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail, transacted_privacy_coin_fee, created_time, block_height, block_hash, serial_number_list, public_key_list, coin_commitment_list)
-	// 	VALUES (:data, :tx_id, :tx_version, :shard_id, :tx_type, :prv_fee, :info, :proof, :proof_detail, :metadata, :transacted_privacy_coin, :transacted_privacy_coin_proof_detail, :transacted_privacy_coin_fee, :created_time, :block_height, :block_hash, :serial_number_list, :public_key_list, :coin_commitment_list)
-	// 	RETURNING id
-	// `
-
-	// db.Exec("INSERT INTO temp VALUES ($1)", []int32{1, 2, 3})
-
-	// or:
-	// values := []string{"foo", "bar"}
-	// err := db.Query(`SELECT * FROM foo WHERE bar = ANY($1)`, pq.Array(values))
-
 	tx := st.DB.MustBegin()
-	// defer tx.Commit()
-
-	// fmt.Println("txs.Data, txs.TxID, txs.TxVersion, txs.ShardID, txs.TxType, txs.PRVFee, txs.Info, txs.Proof, txs.ProofDetail, txs.Metadata, txs.TransactedPrivacyCoin, txs.TransactedPrivacyCoinProofDetail, txs.TransactedPrivacyCoinFee, txs.CreatedTime, txs.BlockHeight, txs.BlockHash, pq.Array(txs.SerialNumberList), pq.Array(txs.PublickeyList), pq.Array(txs.CoinCommitmentList), txs.MetaDataType", txs.Data, txs.TxID, txs.TxVersion, txs.ShardID, txs.TxType, txs.PRVFee, txs.Info, txs.Proof, txs.ProofDetail, txs.Metadata, txs.TransactedPrivacyCoin, txs.TransactedPrivacyCoinProofDetail, txs.TransactedPrivacyCoinFee, txs.CreatedTime, txs.BlockHeight, txs.BlockHash, pq.Array(txs.SerialNumberList), pq.Array(txs.PublickeyList), pq.Array(txs.CoinCommitmentList), txs.MetaDataType)
-
 	tx.MustExec("INSERT INTO transactions (data, tx_id, tx_version, shard_id, tx_type, prv_fee, info, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail, transacted_privacy_coin_fee, created_time, block_height, block_hash, serial_number_list, public_key_list, coin_commitment_list, meta_data_type, shield_type, amount_shield, price, token_id, token_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17 , $18, $19, $20, $21, $22, $23, $24, $25) ",
 		txs.Data, txs.TxID, txs.TxVersion, txs.ShardID, txs.TxType, txs.PRVFee, txs.Info, txs.Proof, txs.ProofDetail, txs.Metadata, txs.TransactedPrivacyCoin, txs.TransactedPrivacyCoinProofDetail, txs.TransactedPrivacyCoinFee, txs.CreatedTime, txs.BlockHeight, txs.BlockHash, pq.Array(txs.SerialNumberList), pq.Array(txs.PublickeyList), pq.Array(txs.CoinCommitmentList), txs.MetaDataType, txs.ShieldType, txs.AmountSheld, txs.Price, txs.TokenID, txs.TokenName)
-	// _, err := tx.NamedQuery(sqlStr, txs)
 	err := tx.Commit()
-
 	return err
 }
 
@@ -361,6 +349,12 @@ func (st *TransactionsStore) UpdateTransaction(ID string, TokenName, TokenID str
 	tx := st.DB.MustBegin()
 	tx.MustExec("Update transactions set token_name= $1, token_id = $2, amount_shield=$3, price=$4, shield_type=$5 WHERE id = $6",
 		TokenName, TokenID, AmountSheld, Price, ShieldType, ID)
+	err := tx.Commit()
+	return err
+}
+func (st *TransactionsStore) UpdatePrice(ID string, Price float64) error {
+	tx := st.DB.MustBegin()
+	tx.MustExec("Update transactions set price=$1 WHERE id = $2", Price, ID)
 	err := tx.Commit()
 	return err
 }
@@ -483,7 +477,7 @@ func (st *TransactionsStore) Report24hV2() ([]*ReportData, error) {
 	}
 }
 
-func (st *TransactionsStore) Shield() ([]*ReportData, error) {
+func (st *TransactionsStore) Shield(shield_type int) ([]*ReportData, error) {
 	var sql string
 	var err error
 	result := []*ReportData{}
@@ -498,11 +492,11 @@ func (st *TransactionsStore) Shield() ([]*ReportData, error) {
 			FROM
 				transactions AS o
 			WHERE
-				o.shield_type = 1
+				o.shield_type = $1
 			ORDER BY
 				created_date) AS b
 		`
-	err = st.DB.Select(&result, sql)
+	err = st.DB.Select(&result, sql, shield_type)
 	if err != nil {
 		return nil, err
 	} else {
@@ -513,26 +507,55 @@ func (st *TransactionsStore) Shield() ([]*ReportData, error) {
 	}
 }
 
-func (st *TransactionsStore) Unshield() ([]*ReportData, error) {
+func (st *TransactionsStore) Shield24h(shield_type int) ([]*ReportData, error) {
 	var sql string
 	var err error
 	result := []*ReportData{}
-	sql = `		
+	sql = `
 			SELECT
-				COUNT(CAST(b.created_date AS DATE)) AS total,
-				coalesce(Round(SUM(b.usd_value)::NUMERIC, 2), 0) AS total_volume
+			COUNT(CAST(b.created_date AS DATE)) AS total,
+			coalesce(Round(SUM(b.usd_value)::NUMERIC, 2), 0) AS total_volume
 			FROM (
-				SELECT
-					CAST(o.created_time AS DATE) AS created_date,
-					((o.amount_shield + 0) * (o.price + 0)) AS usd_value
-				FROM
-					transactions AS o
-				WHERE
-					o.shield_type = 2
-				ORDER BY
-					created_date) AS b
+			SELECT
+				CAST(o.created_time AS DATE) AS created_date,
+				((o.amount_shield + 0) * (o.price + 0)) AS usd_value
+			FROM
+				transactions AS o
+			WHERE
+				o.shield_type = $1 and  o.created_time >= NOW() - INTERVAL '24 HOURS'
+			ORDER BY
+				created_date) AS b
 		`
-	err = st.DB.Select(&result, sql)
+	err = st.DB.Select(&result, sql, shield_type)
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
+}
+func (st *TransactionsStore) ShieldMonth(shield_type int) ([]*ReportData, error) {
+	var sql string
+	var err error
+	result := []*ReportData{}
+	sql = `
+			SELECT
+			COUNT(CAST(b.created_date AS DATE)) AS total,
+			coalesce(Round(SUM(b.usd_value)::NUMERIC, 2), 0) AS total_volume
+			FROM (
+			SELECT
+				CAST(o.created_time AS DATE) AS created_date,
+				((o.amount_shield + 0) * (o.price + 0)) AS usd_value
+			FROM
+				transactions AS o
+			WHERE
+				o.shield_type = $1 and  o.created_time  >= date_trunc('month', CURRENT_DATE)
+			ORDER BY
+				created_date) AS b
+		`
+	err = st.DB.Select(&result, sql, shield_type)
 	if err != nil {
 		return nil, err
 	} else {

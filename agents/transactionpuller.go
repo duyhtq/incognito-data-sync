@@ -147,7 +147,27 @@ func (puller *TransactionPuller) GetDataCoin() ([]InfoCoin, error) {
 	}
 	return respone, nil
 }
-
+func (puller *TransactionPuller) Price(symbol, tokenId, timestamp string) float64 {
+	dataCoin, _ := puller.GetDataCoin()
+	var coinID string
+	for _, coinDetail := range dataCoin {
+		if coinDetail.Symbol == strings.ToLower(symbol) {
+			coinID = coinDetail.ID
+		}
+	}
+	if tokenId == "4a790f603aa2e7afe8b354e63758bb187a4724293d6057a46859c81b7bd0e9fb" {
+		coinID = "paxos-standard"
+	}
+	if tokenId == "47129778a650d75a7d0e8432878f05e466f5ee64cde3cee91f343ec523e75b58" {
+		coinID = "uniswap"
+	}
+	if tokenId == "4077654cf585a99b448564d1ecc915baf7b8ac58693d9f0a6af6c12b18143044" || tokenId == "0369ef074eee01fe42ce10bcddf4f411435598f451b31ad169f5aa8def9d940f" {
+		coinID = "harmony"
+	}
+	timeDate, _ := time.Parse("2006-01-02T15:04:05.999999", timestamp)
+	price, _ := puller.GetPrice(coinID, timeDate.Format("02-01-2006"))
+	return price
+}
 func (puller *TransactionPuller) Execute() {
 	// fmt.Println("time1: ", time.Now())
 	fmt.Println("[Transaction puller] Agent is executing...")
@@ -211,6 +231,7 @@ func (puller *TransactionPuller) Execute() {
 		if len(processingTxs) > 0 {
 			for _, t := range processingTxs {
 				fmt.Println("time for for ", time.Now())
+				fmt.Println("Transaction ID: ", t)
 				txByID, err := puller.TransactionsStore.GetTransactionById(t)
 				if err != nil || txByID != nil {
 					fmt.Println("err get tx id: ", err)
@@ -251,7 +272,6 @@ func (puller *TransactionPuller) Execute() {
 						txModel.MetaDataType = data.Type
 					}
 				}
-				fmt.Println("MetaDataType", txModel.MetaDataType)
 				if txModel.MetaDataType == IssuingResponseMeta || txModel.MetaDataType == IssuingETHResponseMeta {
 					type PrivacyCustomTokenData struct {
 						Amount       float64 `json:"Amount"`
@@ -266,15 +286,7 @@ func (puller *TransactionPuller) Execute() {
 					txModel.ShieldType = 1
 					txModel.TokenName = token.Name
 					txModel.TokenID = data.PropertyID
-					dataCoin, _ := puller.GetDataCoin()
-					var coinID string
-					for _, coinDetail := range dataCoin {
-						if coinDetail.Symbol == strings.ToLower(token.Symbol) {
-							coinID = coinDetail.ID
-						}
-					}
-					timeDate, _ := time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
-					price, _ := puller.GetPrice(coinID, timeDate.Format("02-01-2006"))
+					price := puller.Price(token.Symbol, data.PropertyID, tx.LockTime)
 					txModel.Price = price
 				}
 
@@ -294,17 +306,7 @@ func (puller *TransactionPuller) Execute() {
 					txModel.ShieldType = 2
 					txModel.TokenName = token.Name
 					txModel.TokenID = data.TokenID
-					dataCoin, _ := puller.GetDataCoin()
-					var coinID string
-					for _, coinDetail := range dataCoin {
-						if coinDetail.Symbol == strings.ToLower(token.Symbol) {
-							coinID = coinDetail.ID
-						}
-					}
-					fmt.Println("coinID", token.Symbol, coinID)
-					timeDate, _ := time.Parse("2006-01-02T15:04:05.999999", tx.LockTime)
-					fmt.Println("timeDate", timeDate)
-					price, _ := puller.GetPrice(coinID, timeDate.Format("02-01-2006"))
+					price := puller.Price(token.Symbol, data.TokenID, tx.LockTime)
 					txModel.Price = price
 				}
 
@@ -387,8 +389,6 @@ func (puller *TransactionPuller) Execute() {
 		}
 		latestBlockHeight++
 	}
-
-	fmt.Println("[Transaction puller] Agent is finished...")
 }
 
 /*

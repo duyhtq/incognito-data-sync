@@ -252,6 +252,15 @@ func (pie *PDEInstsExtractor) CheckPrice(tokenID string, amount, beaconHeght uin
 				coinID = coinDetail.ID
 			}
 		}
+		if tokenID == "4a790f603aa2e7afe8b354e63758bb187a4724293d6057a46859c81b7bd0e9fb" {
+			coinID = "paxos-standard"
+		}
+		if tokenID == "47129778a650d75a7d0e8432878f05e466f5ee64cde3cee91f343ec523e75b58" {
+			coinID = "uniswap"
+		}
+		if tokenID == "4077654cf585a99b448564d1ecc915baf7b8ac58693d9f0a6af6c12b18143044" || tokenID == "0369ef074eee01fe42ce10bcddf4f411435598f451b31ad169f5aa8def9d940f" {
+			coinID = "harmony"
+		}
 		price, err := GetPrice(coinID, time.Format("02-01-2006"))
 		fmt.Println("error GetPrice ....", err)
 		Price = price
