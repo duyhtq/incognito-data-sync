@@ -90,6 +90,7 @@ func (s *Server) Pdex24hV2(c *gin.Context) {
 		},
 	})
 }
+
 func (s *Server) Shield(c *gin.Context) {
 	transactions, err := s.transaction.Shield()
 	if err != nil {
@@ -108,6 +109,64 @@ func (s *Server) Unshield(c *gin.Context) {
 	transactions, err := s.transaction.Unshield()
 	if err != nil {
 		s.logger.Error("s.transaction.Unshield", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+
+func (s *Server) Shield24h(c *gin.Context) {
+	transactions, err := s.transaction.Shield24h()
+	if err != nil {
+		s.logger.Error("s.transaction.Shield24h", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+func (s *Server) Unshield24h(c *gin.Context) {
+	transactions, err := s.transaction.Unshield24h()
+	if err != nil {
+		s.logger.Error("s.transaction.Unshield24h", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+
+func (s *Server) ShieldMonth(c *gin.Context) {
+	transactions, err := s.transaction.ShieldMonth()
+	if err != nil {
+		s.logger.Error("s.transaction.ShieldMonth", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+func (s *Server) UnshieldMonth(c *gin.Context) {
+	transactions, err := s.transaction.UnshieldMonth()
+	if err != nil {
+		s.logger.Error("s.transaction.UnshieldMonth", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
 		return
 	}

@@ -41,7 +41,7 @@ func (is *PDEInstructionsPGStore) GetLatestProcessedBCHeight() (uint64, error) {
 }
 
 func (is *PDEInstructionsPGStore) GetPdex() ([]*models.PDETrade, error) {
-	sql := "SELECT requested_tx_id, receiving_tokenid_str, receive_amount, beacon_height, beacon_time_stamp FROM pde_trades where price is null or amount is null"
+	sql := "SELECT requested_tx_id, receiving_tokenid_str, receive_amount, beacon_height, beacon_time_stamp FROM pde_trades where price =0 "
 	result := []*models.PDETrade{}
 	err := is.DB.Select(&result, sql)
 	if err != nil {

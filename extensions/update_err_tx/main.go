@@ -57,9 +57,10 @@ type InfoCoin struct {
 	Symbol string `json:"symbol"`
 }
 type MetaData struct {
-	Type         int     `json:"Type"`
-	BurnedAmount float64 `json:"BurnedAmount"`
-	TokenID      string  `json:"TokenID"`
+	Type          int     `json:"Type"`
+	BurnedAmount  float64 `json:"BurnedAmount"`
+	BurningAmount float64 `json:"BurningAmount"`
+	TokenID       string  `json:"TokenID"`
 }
 
 func GetDataCoin() ([]InfoCoin, error) {
@@ -136,53 +137,63 @@ func GetPdexState(beaconHeght int32) (float64, error) {
 	}
 	return value1, nil
 }
+
+const (
+	IssuingResponseMeta    = 25 // shields ota
+	IssuingETHResponseMeta = 81 // shields eta
+
+	ContractingRequestMeta = 26  // centralized: btc, xmr...
+	BurningRequestMeta     = 27  // eta
+	BurningRequestMetaV2   = 240 // eta
+)
+
 func main() {
-	// if true {
-	// 	return
-	// }
 	conf := config.GetConfig()
 	db, err := pg.Init(conf)
 	if err != nil {
 		return
 	}
 
-	txStore, err := pg.NewPDEInstructionsPGStore(db)
+	txStore, err := pg.NewTransactionsStore(db)
 	if err != nil {
 		return
 	}
 
-	txs, err := txStore.GetPdex()
+	txs, err := txStore.GetTransac()
 	fmt.Println("txs count: ", len(txs))
 	for _, tx := range txs {
+		fmt.Println("ID ID ID: ", tx.ID)
 		var Price float64
-		var Amount float64
-		if tx.ReceivingTokenIDStr == "0000000000000000000000000000000000000000000000000000000000000004" {
-			pricePrv, _ := GetPdexState(int32(tx.BeaconHeight))
-			Price = pricePrv
-			Amount = float64(tx.ReceiveAmount) / math.Pow10(int(9))
-		} else {
-			token, _ := txStore.GetToken(tx.ReceivingTokenIDStr)
-			if token == nil {
-				continue
-			}
-			dataCoin, _ := GetDataCoin()
-			var coinID string
-			for _, coinDetail := range dataCoin {
-				if coinDetail.Symbol == strings.ToLower(token.Symbol) {
-					coinID = coinDetail.ID
-				}
-			}
-			fmt.Println("coinID: ", coinID)
-			price, _ := GetPrice(coinID, tx.BeaconTimeStamp.Format("02-01-2006"))
-			Price = price
-			Amount = float64(tx.ReceiveAmount) / token.Decimal
-		}
-		if Price != 0 {
-			err = txStore.UpdateCustomFiled(tx.RequestedTxID, Price, Amount)
-			if err == nil {
-				fmt.Println("-------- Amount, Price, update success! ---------", Amount, Price)
-			}
-		}
-	}
 
+		token, _ := txStore.GetToken(tx.TokenID)
+		if token == nil {
+			continue
+		}
+		dataCoin, _ := GetDataCoin()
+		var coinID string
+		for _, coinDetail := range dataCoin {
+			if coinDetail.Symbol == strings.ToLower(token.Symbol) {
+				coinID = coinDetail.ID
+			}
+		}
+		if tx.TokenID == "4a790f603aa2e7afe8b354e63758bb187a4724293d6057a46859c81b7bd0e9fb" {
+			coinID = "paxos-standard"
+		}
+		if tx.TokenID == "47129778a650d75a7d0e8432878f05e466f5ee64cde3cee91f343ec523e75b58" {
+			coinID = "uniswap"
+		}
+		if tx.TokenID == "4077654cf585a99b448564d1ecc915baf7b8ac58693d9f0a6af6c12b18143044" || tx.TokenID == "0369ef074eee01fe42ce10bcddf4f411435598f451b31ad169f5aa8def9d940f" {
+			coinID = "harmony"
+		}
+
+		price, _ := GetPrice(coinID, tx.CreatedTime.Format("02-01-2006"))
+		Price = price
+		if price != 0 {
+			err = txStore.UpdatePrice(tx.ID, Price)
+			if err == nil {
+				fmt.Println("-----Update success!------", coinID, Price)
+			}
+		}
+
+	}
 }
