@@ -217,7 +217,7 @@ func (st *TransactionsStore) GetTransactionsNotFix() ([]*models.ShortTransaction
 }
 
 func (st *TransactionsStore) GetTransac() ([]*models.Transaction, error) {
-	sql := "SELECT id, tx_id, data, meta_data_type, created_time, token_id, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions where price=0 and shield_type in (1, 2)"
+	sql := "SELECT id, tx_id, data, meta_data_type, created_time, token_id, proof, proof_detail, metadata, transacted_privacy_coin, transacted_privacy_coin_proof_detail FROM transactions where price=0 and shield_type in (1, 2) and  created_time >= NOW() - INTERVAL '15 days'"
 	result := []*models.Transaction{}
 	err := st.DB.Select(&result, sql)
 	if err != nil {
@@ -241,6 +241,13 @@ type ReportData struct {
 	TotalVolume float64 `db:"total_volume"`
 	Month       int     `db:"month"`
 	Year        int     `db:"year"`
+}
+type ReportDetailShieldUnshiled struct {
+	Count       int     `db:"count"`
+	Total       float64 `db:"total"`
+	TokenName   string  `db:"token_name"`
+	TotalVolume float64 `db:"total_volume"`
+	TypeMeta    int     `db:"meta_data_type"`
 }
 
 func (st *TransactionsStore) ReportPdexTrading(rangeFilter, token string) ([]*ReportData, error) {
@@ -556,6 +563,91 @@ func (st *TransactionsStore) ShieldMonth(shield_type int) ([]*ReportData, error)
 				created_date) AS b
 		`
 	err = st.DB.Select(&result, sql, shield_type)
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
+}
+func (st *TransactionsStore) ReportDetailShieldUnshiled(rangeShield, typeShield string) ([]*ReportDetailShieldUnshiled, error) {
+	var sql string
+	var checkRange string
+	var err error
+	result := []*ReportDetailShieldUnshiled{}
+	sql = `
+			SELECT
+			Count(*) as count,
+			meta_data_type,
+			sum((amount_shield + 0)) as total,
+			token_name AS token_name, (coalesce(Round(SUM((amount_shield + 0) * (price + 0))::NUMERIC, 2), 0)) AS total_volume
+			FROM
+			 transactions
+			WHERE
+			shield_type = $1 and price != 0 
+		`
+	order := ` GROUP BY token_name, meta_data_type ORDER BY total_volume DESC`
+	switch rangeShield {
+	case "24h":
+		checkRange = ` and  created_time >= NOW() - INTERVAL '24 HOURS'`
+	case "30day":
+		checkRange = ` and  created_time >= NOW() - INTERVAL '30 days'`
+	case "all":
+		checkRange = ` `
+	}
+
+	query := sql + checkRange + order
+	fmt.Println("query ", query)
+	err = st.DB.Select(&result, query, typeShield)
+	if err != nil {
+		return nil, err
+	} else {
+		if len(result) == 0 {
+			return nil, nil
+		}
+		return result, nil
+	}
+}
+
+func (st *TransactionsStore) ReportShieldUnshield(typeShield, rangeShield string) ([]*ReportData, error) {
+	fmt.Println("typeShield, rangeShield ", typeShield, rangeShield)
+	var sql string
+	var checkRange string
+	var err error
+	result := []*ReportData{}
+	sql = `
+			SELECT
+			COUNT(CAST(b.created_date AS DATE)) AS total,
+			coalesce(Round(SUM(b.usd_value)::NUMERIC, 2), 0) AS total_volume
+			FROM (
+			SELECT
+				CAST(o.created_time AS DATE) AS created_date,
+				((o.amount_shield + 0) * (o.price + 0)) AS usd_value
+			FROM
+				transactions AS o
+			WHERE
+				o.shield_type = $1
+		`
+	order := ` ORDER BY created_date) AS b`
+
+	switch rangeShield {
+	case "24h":
+		checkRange = ` and  o.created_time >= NOW() - INTERVAL '24 HOURS'`
+	case "month":
+		checkRange = ` and  o.created_time  >= date_trunc('month', CURRENT_DATE)`
+	case "30day":
+		checkRange = ` and  o.created_time >= NOW() - INTERVAL '30 days'`
+	case "60day":
+		checkRange = ` and  o.created_time >= NOW() - INTERVAL '60 days'`
+	case "all":
+		checkRange = ` `
+	}
+
+	query := sql + checkRange + order
+	fmt.Println("query ", query)
+	err = st.DB.Select(&result, query, typeShield)
 	if err != nil {
 		return nil, err
 	} else {

@@ -55,3 +55,9 @@ func (t *Transaction) ShieldMonth() ([]*postgresql.ReportData, error) {
 func (t *Transaction) UnshieldMonth() ([]*postgresql.ReportData, error) {
 	return t.transaction.ShieldMonth(2)
 }
+func (t *Transaction) ReportShieldUnshield(typeShield, rangeShield string) ([]*postgresql.ReportData, error) {
+	return t.transaction.ReportShieldUnshield(typeShield, rangeShield)
+}
+func (t *Transaction) ReportDetailShieldUnshiled(rangeShield, typeShield string) ([]*postgresql.ReportDetailShieldUnshiled, error) {
+	return t.transaction.ReportDetailShieldUnshiled(rangeShield, typeShield)
+}
