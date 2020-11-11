@@ -22,6 +22,10 @@ func (s *Server) Routes() {
 
 	s.g.GET("/pdex-volume", s.PdexVolume)
 
+	s.g.GET("/shield-unshield", s.ReportShieldUnshield)
+
+	s.g.GET("/detail-shield", s.ReportDetailShieldUnshiled)
+
 	s.g.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
