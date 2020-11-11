@@ -177,3 +177,38 @@ func (s *Server) UnshieldMonth(c *gin.Context) {
 		},
 	})
 }
+
+func (s *Server) ReportShieldUnshield(c *gin.Context) {
+	typeShield := c.DefaultQuery("type_shield", "1")
+	rangeShield := c.DefaultQuery("range_shield", "all")
+	transactions, err := s.transaction.ReportShieldUnshield(typeShield, rangeShield)
+	if err != nil {
+		s.logger.Error("s.transaction.UnshieldMonth", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
+
+func (s *Server) ReportDetailShieldUnshiled(c *gin.Context) {
+	rangeShield := c.DefaultQuery("range_shield", "24h")
+	typeShield := c.DefaultQuery("type_shield", "1")
+
+	transactions, err := s.transaction.ReportDetailShieldUnshiled(rangeShield, typeShield)
+	if err != nil {
+		s.logger.Error("s.transaction.UnshieldMonth", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, serializers.Resp{Error: err})
+		return
+	}
+
+	c.JSON(http.StatusOK, serializers.Resp{
+		Result: map[string]interface{}{
+			"Data": transactions,
+		},
+	})
+}
