@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  gcr: circleci/gcp-gcr@0.6.1
+  gcr: circleci/gcp-gcr@0.7.1
 jobs:
   build_staging:
     machine: true
