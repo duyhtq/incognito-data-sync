@@ -9,7 +9,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.4.0
 	github.com/golang/protobuf v1.3.5 // indirect
-	github.com/inc-backend/crypto-libs v0.1.4
+	github.com/inc-backend/crypto-libs v0.1.4 
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/lib/pq v1.3.0
@@ -20,4 +20,6 @@ require (
 	go.uber.org/zap v1.15.0
 	google.golang.org/appengine v1.6.6 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
+	gorm.io/driver/postgres v1.1.0
+	gorm.io/gorm v1.21.9
 )

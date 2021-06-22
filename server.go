@@ -18,6 +18,8 @@ import (
 func main() {
 	conf := config.GetConfig()
 
+	log.Println(conf)
+
 	logger := service.NewLogger(conf)
 
 	db, err := postgresql.Init(conf)
