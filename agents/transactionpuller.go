@@ -285,13 +285,17 @@ func (puller *TransactionPuller) Execute() {
 					fmt.Printf("=======tx: %+v \n", tx)
 					fmt.Printf("=======token: %+v \n", token)
 					fmt.Printf("=======data: %+v \n", data)
+					if token != nil {
+						txModel.AmountSheld = data.Amount / token.Decimal
+						txModel.ShieldType = 1
+						txModel.TokenName = token.Name
+						txModel.TokenID = data.PropertyID
+						price := puller.Price(token.Symbol, data.PropertyID, tx.LockTime)
+						txModel.Price = price
+					} else {
+						log.Printf("[Transaction puller] An error occured while getting token err %+v\n", token)
 
-					txModel.AmountSheld = data.Amount / token.Decimal
-					txModel.ShieldType = 1
-					txModel.TokenName = token.Name
-					txModel.TokenID = data.PropertyID
-					price := puller.Price(token.Symbol, data.PropertyID, tx.LockTime)
-					txModel.Price = price
+					}
 				}
 
 				if txModel.MetaDataType == ContractingRequestMeta || txModel.MetaDataType == BurningRequestMeta || txModel.MetaDataType == BurningRequestMetaV2 {
@@ -302,16 +306,21 @@ func (puller *TransactionPuller) Execute() {
 						continue
 					}
 					token, _ := puller.TransactionsStore.GetToken(data.TokenID)
-					if txModel.MetaDataType == ContractingRequestMeta {
-						txModel.AmountSheld = data.BurnedAmount / token.Decimal
+					if token != nil {
+						if txModel.MetaDataType == ContractingRequestMeta {
+							txModel.AmountSheld = data.BurnedAmount / token.Decimal
+						} else {
+							txModel.AmountSheld = data.BurningAmount / token.Decimal
+						}
+						txModel.ShieldType = 2
+						txModel.TokenName = token.Name
+						txModel.TokenID = data.TokenID
+						price := puller.Price(token.Symbol, data.TokenID, tx.LockTime)
+						txModel.Price = price
 					} else {
-						txModel.AmountSheld = data.BurningAmount / token.Decimal
+						log.Printf("[Transaction puller] An error occured while getting token err %+v\n", token)
+
 					}
-					txModel.ShieldType = 2
-					txModel.TokenName = token.Name
-					txModel.TokenID = data.TokenID
-					price := puller.Price(token.Symbol, data.TokenID, tx.LockTime)
-					txModel.Price = price
 				}
 
 				// Begin custom data =========================================
