@@ -9,8 +9,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.4.0
 	github.com/golang/protobuf v1.3.5 // indirect
-	github.com/inc-backend/crypto-libs v0.1.3
-	github.com/jinzhu/gorm v1.9.16
+	github.com/inc-backend/crypto-libs v0.1.4 
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/lib/pq v1.3.0
