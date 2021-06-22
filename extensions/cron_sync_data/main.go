@@ -145,6 +145,7 @@ func NewServer() (*Server, error) {
 	// }
 	// agentsList = registerBeaconBlockPuller(rpcClient, agentsList, beaconBlockStore)
 
+	//return
 	// shard block: 8 shard
 	shardBlockStore, err := pg.NewShardBlockStore(db)
 	if err != nil {
@@ -152,6 +153,7 @@ func NewServer() (*Server, error) {
 	}
 	for i := 0; i <= 7; i++ {
 		agentsList = registerShardBlockPuller(i, rpcClient, agentsList, shardBlockStore)
+
 	}
 
 	// tx: 8 shard
@@ -199,8 +201,13 @@ func (s *Server) Run() {
 	agents := s.agents
 	go s.NotifyQuitSignal(agents)
 	for _, a := range agents {
+		fmt.Printf("executeAgent: %+v \n", a)
 		go executeAgent(s.finish, a)
+
 	}
+
+	//go executeAgent(s.finish, agents[len(agents)-1])
+
 }
 
 func executeAgent(
@@ -223,7 +230,10 @@ func executeAgent(
 }
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	//29f836727fd271a1d0aacd186e556bbed516a12c7983194c1b9e25d4e0f8cb78
+
+	runtime.GOMAXPROCS(runtime.NumCPU() / 2)
 	s, err := NewServer()
 	if err != nil {
 		return

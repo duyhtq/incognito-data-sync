@@ -139,6 +139,8 @@ func (pie *PDEInstsExtractor) Execute() {
 			}
 			err = pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
 			if err != nil {
+
+				log.Printf("%+v", err)
 				fmt.Println("An error occured while storing pde trade")
 				continue
 			}
@@ -165,6 +167,7 @@ func (pie *PDEInstsExtractor) Execute() {
 			err = pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
 			if err != nil {
 				fmt.Println("An error occured while storing pde trade")
+				log.Printf("%+v", err)
 				continue
 			}
 		}
@@ -225,6 +228,7 @@ func (pie *PDEInstsExtractor) Execute() {
 			err := pie.PDEInstructionsStore.StorePDETrade(&tradeModel)
 			if err != nil {
 				fmt.Println("An error occured while storing pde trade")
+				log.Printf("%+v", err)
 				continue
 			}
 		}
