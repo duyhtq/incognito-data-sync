@@ -223,7 +223,7 @@ func executeAgent(
 }
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(runtime.NumCPU() / 2)
 	s, err := NewServer()
 	if err != nil {
 		return

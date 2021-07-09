@@ -233,7 +233,7 @@ func main() {
 
 	//29f836727fd271a1d0aacd186e556bbed516a12c7983194c1b9e25d4e0f8cb78
 
-	runtime.GOMAXPROCS(runtime.NumCPU()) // / 2
+	runtime.GOMAXPROCS(runtime.NumCPU() / 2) // / 2
 	s, err := NewServer()
 	if err != nil {
 		return

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/duyhtq/incognito-data-sync/config"
 	"github.com/duyhtq/incognito-data-sync/entities"
 	"github.com/duyhtq/incognito-data-sync/models"
 	"github.com/duyhtq/incognito-data-sync/utils"
@@ -351,7 +352,8 @@ type PairToken struct {
 
 func GetPdexState(beaconHeght int32) (float64, error) {
 	client := &http.Client{}
-	bc := incognito.NewBlockchain(client, "http://51.83.237.20:9944/", "", "", "https://mainnet.incognito.org/", "0000000000000000000000000000000000000000000000000000000000000004")
+	conf := config.GetConfig()
+	bc := incognito.NewBlockchain(client, conf.Incognito.ChainEndpoint, "", "", conf.Incognito.ChainEndpoint, "0000000000000000000000000000000000000000000000000000000000000004")
 	pde, err := bc.GetPdeState(beaconHeght)
 	// pde, err := pie.GetPdeState(beaconHeght)
 	// getPDEState
