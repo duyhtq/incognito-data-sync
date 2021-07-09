@@ -282,10 +282,10 @@ func (puller *TransactionPuller) Execute() {
 					_ = json.Unmarshal([]byte(tx.PrivacyCustomTokenData), data)
 					token, _ := puller.TransactionsStore.GetToken(data.PropertyID)
 
-					fmt.Printf("=======tx: %+v \n", tx)
-					fmt.Printf("=======token: %+v \n", token)
-					fmt.Printf("=======data: %+v \n", data)
 					if token != nil {
+						fmt.Printf("=======tx: %+v \n", tx)
+						fmt.Printf("=======token: %+v \n", token)
+						fmt.Printf("=======data: %+v \n", data)
 						txModel.AmountSheld = data.Amount / token.Decimal
 						txModel.ShieldType = 1
 						txModel.TokenName = token.Name
@@ -307,6 +307,10 @@ func (puller *TransactionPuller) Execute() {
 					}
 					token, _ := puller.TransactionsStore.GetToken(data.TokenID)
 					if token != nil {
+						fmt.Printf("=======tx: %+v \n", tx)
+						fmt.Printf("=======token: %+v \n", token)
+						fmt.Printf("=======data: %+v \n", data)
+
 						if txModel.MetaDataType == ContractingRequestMeta {
 							txModel.AmountSheld = data.BurnedAmount / token.Decimal
 						} else {
